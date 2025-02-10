@@ -1,9 +1,14 @@
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import productModel from "../models/productModel";
-import { createProductController } from "./productController";
+import {
+  createProductController,
+  getProductController,
+} from "./productController";
 import fs from "fs";
 import { ObjectId } from "mongodb";
+import { describe } from "node:test";
+import categoryModel from "../models/categoryModel";
 
 // in-memory mongo server for testing
 let mongoServer;
@@ -43,17 +48,41 @@ const photos = [
   },
 ];
 
+// list of dummy categories, needed for testing as well, insert using categoryModel if necessary
+const categories = [
+  {
+    _id: products[0].category,
+    name: "cat0",
+    slug: "cat0",
+  },
+  {
+    _id: products[1].category,
+    name: "cat1",
+    slug: "cat1",
+  },
+];
+
 // mock res object, to keep track of status code (201/500) and response content within tests
 const res = {
   status: jest.fn().mockReturnThis(),
   send: jest.fn(),
 };
 
-// set up in-memory mongo database for all tests in this file
 beforeAll(async () => {
+  // set up in-memory mongo database for all tests in this file
   mongoServer = await MongoMemoryServer.create();
   const mongoUri = mongoServer.getUri();
   await mongoose.connect(mongoUri);
+
+  // mock fs.readFileSync to return dummy photo or throw error for createProductController tests
+  jest.spyOn(fs, "readFileSync").mockImplementation((path) => {
+    const photo = photos.find((photo) => photo.path === path);
+    if (photo) {
+      return photo.buffer;
+    } else {
+      throw new Error("Invalid photo path");
+    }
+  });
 });
 
 // after tests are done, cleanup/teardown in-memory mongo database
@@ -67,23 +96,13 @@ beforeEach(async () => {
   res.status.mockClear();
   res.send.mockClear();
   await productModel.deleteMany({});
+  await categoryModel.deleteMany({});
 });
 
 describe("createProductController tests", () => {
   // choose the first element of our list as mock product and photo data for createProductController testsgit
   const productData = products[0];
   const photoData = photos[0];
-
-  beforeAll(() => {
-    // mock fs.readFileSync to return dummy photo or throw error for createProductController tests
-    jest.spyOn(fs, "readFileSync").mockImplementation((path) => {
-      if (path === photoData.path) {
-        return photoData.buffer;
-      } else {
-        throw Error("Invalid photo path");
-      }
-    });
-  });
 
   test("should correctly create and save product with photo", async () => {
     const req = { fields: productData, files: { photo: photoData } };
@@ -247,6 +266,71 @@ describe("createProductController tests", () => {
       error: new Error("Invalid photo path"),
       message: "Error in creating product",
       success: false,
+    });
+  });
+});
+
+describe("getProductController tests", () => {
+  beforeEach(async () => {
+    await categoryModel.insertMany(categories);
+  });
+  test("should succeed with no products when mongo is empty", async () => {
+    expect(await productModel.countDocuments({})).toEqual(0);
+    await getProductController({}, res);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      counTotal: 0,
+      message: "All Products",
+      products: [],
+    });
+  });
+  test("should succeed with products when mongo has documents", async () => {
+    expect(await productModel.countDocuments({})).toEqual(0);
+
+    for (let i = 0; i < products.length; i++) {
+      await createProductController(
+        { fields: products[i], files: { photo: photos[i] } },
+        res
+      );
+    }
+
+    expect(await productModel.countDocuments({})).toEqual(2);
+
+    await getProductController({}, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    const lastCall = res.send.mock.lastCall[0];
+    expect(lastCall).toMatchObject({
+      success: true,
+      counTotal: 2,
+      message: "All Products",
+    });
+
+    for (let i = 0; i < lastCall.products.length; i++) {
+      const currProduct = products[products.length - i - 1];
+      const currCategory = categories[categories.length - i - 1];
+      expect(currProduct).toMatchObject({
+        _id: lastCall.products[i]._id,
+        name: lastCall.products[i].name,
+        description: lastCall.products[i].description,
+        price: lastCall.products[i].price,
+        quantity: lastCall.products[i].quantity,
+        shipping: lastCall.products[i].shipping,
+      });
+      expect(lastCall.products[i].category).toMatchObject(currCategory);
+    }
+  });
+  test("should fail with 500 error when an error is thrown", async () => {
+    jest.spyOn(productModel, "find");
+    const error = new Error("getProductController Error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+    await getProductController({}, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenLastCalledWith({
+      success: false,
+      message: "Error in getting products",
+      error: error,
     });
   });
 });
