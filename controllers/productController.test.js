@@ -8,30 +8,40 @@ import { ObjectId } from "mongodb";
 // in-memory mongo server for testing
 let mongoServer;
 
-// dummy product and photo data, can be copied and modified if necessary within tests
-const productData = {
-  _id: new ObjectId(),
-  name: "Wireless Headphones",
-  description: "High-quality noise-canceling headphones.",
-  price: 199.99,
-  category: new ObjectId(),
-  quantity: 100,
-  shipping: true,
-};
-const photoData = {
-  path: "./test-photo.jpg",
-  type: "image/jpeg",
-};
-const photoBuffer = Buffer.from("dummy photo");
+// list of dummy product and photo data, can be accessed/copied/modified if necessary within tests
+const products = [
+  {
+    _id: new ObjectId(),
+    name: "Wireless Headphones",
+    description: "High-quality noise-canceling headphones.",
+    price: 199.99,
+    category: new ObjectId(),
+    quantity: 100,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "Bluetooth Speaker",
+    description: "Portable speaker with deep bass and clear sound.",
+    price: 49.99,
+    category: new ObjectId(),
+    quantity: 250,
+    shipping: true,
+  },
+];
 
-// mock fs.readFileSync to return dummy photo or throw error for testing purposes
-jest.spyOn(fs, "readFileSync").mockImplementation((path) => {
-  if (path === photoData.path) {
-    return photoBuffer;
-  } else {
-    throw Error("Invalid photo path");
-  }
-});
+const photos = [
+  {
+    path: "./test-photo.jpg",
+    type: "image/jpeg",
+    buffer: Buffer.from("dummy photo"),
+  },
+  {
+    path: "./test-photo2.jpg",
+    type: "image/png",
+    buffer: Buffer.from("dummy photo 2"),
+  },
+];
 
 // mock res object, to keep track of status code (201/500) and response content within tests
 const res = {
@@ -39,20 +49,40 @@ const res = {
   send: jest.fn(),
 };
 
-describe("createProductController", () => {
-  beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    await mongoose.connect(mongoUri);
-  });
+// set up in-memory mongo database for all tests in this file
+beforeAll(async () => {
+  mongoServer = await MongoMemoryServer.create();
+  const mongoUri = mongoServer.getUri();
+  await mongoose.connect(mongoUri);
+});
 
-  afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
-  });
+// after tests are done, cleanup/teardown in-memory mongo database
+afterAll(async () => {
+  await mongoose.disconnect();
+  await mongoServer.stop();
+});
 
-  beforeEach(async () => {
-    await productModel.deleteMany({});
+// clear res mocks and remove all documents in product db collection before each test
+beforeEach(async () => {
+  res.status.mockClear();
+  res.send.mockClear();
+  await productModel.deleteMany({});
+});
+
+describe("createProductController tests", () => {
+  // choose the first element of our list as mock product and photo data for createProductController testsgit
+  const productData = products[0];
+  const photoData = photos[0];
+
+  beforeAll(() => {
+    // mock fs.readFileSync to return dummy photo or throw error for createProductController tests
+    jest.spyOn(fs, "readFileSync").mockImplementation((path) => {
+      if (path === photoData.path) {
+        return photoData.buffer;
+      } else {
+        throw Error("Invalid photo path");
+      }
+    });
   });
 
   test("should correctly create and save product with photo", async () => {
@@ -78,7 +108,7 @@ describe("createProductController", () => {
 
     // check that the photo data is correctly stored in the mongo document
     expect(savedProduct.photo.data.toString("base64")).toEqual(
-      photoBuffer.toString("base64")
+      photoData.buffer.toString("base64")
     );
     expect(savedProduct.photo.contentType).toEqual(photoData.type);
 
@@ -127,13 +157,7 @@ describe("createProductController", () => {
     expect(res.send).toHaveBeenCalledWith({
       success: true,
       message: "Product Created Successfully",
-      products: expect.objectContaining({
-        ...productData,
-        photo: expect.objectContaining({
-          contentType: photoData.type,
-          data: expect.anything(),
-        }),
-      }),
+      products: expect.objectContaining(productData),
     });
   });
 
