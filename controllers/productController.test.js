@@ -55,7 +55,7 @@ describe("createProductController", () => {
     await productModel.deleteMany({});
   });
 
-  test("should correctly create and save product", async () => {
+  test("should correctly create and save product with photo", async () => {
     const req = { fields: productData, files: { photo: photoData } };
 
     await createProductController(req, res);
@@ -81,6 +81,44 @@ describe("createProductController", () => {
       photoBuffer.toString("base64")
     );
     expect(savedProduct.photo.contentType).toEqual(photoData.type);
+
+    // expect http response code 201 (created successfully)
+    expect(res.status).toHaveBeenCalledWith(201);
+
+    // expect correct http response
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      message: "Product Created Successfully",
+      products: expect.objectContaining({
+        ...productData,
+        photo: expect.objectContaining({
+          contentType: photoData.type,
+          data: expect.anything(),
+        }),
+      }),
+    });
+  });
+
+  test("should correctly create and save product without photo", async () => {
+    const req = { fields: productData, files: {} };
+
+    await createProductController(req, res);
+
+    // query in-memory mongo collection for document
+    const savedProduct = await productModel.findOne({
+      _id: productData._id,
+    });
+
+    // check that the req fields are saved correctly into the mongo document
+    expect({
+      _id: savedProduct._id,
+      name: savedProduct.name,
+      description: savedProduct.description,
+      price: savedProduct.price,
+      category: savedProduct.category,
+      quantity: savedProduct.quantity,
+      shipping: savedProduct.shipping,
+    }).toEqual(productData);
 
     // expect http response code 201 (created successfully)
     expect(res.status).toHaveBeenCalledWith(201);
