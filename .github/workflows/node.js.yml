@@ -1,0 +1,64 @@
+# Adapted from GitHub Actions Documentation
+
+name: Node.js CI
+run-name: Run npm test in ${{ github.ref_name }} ${{ github.ref_type }} from ${{ github.event_name }} event by @${{ github.actor }}
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+  workflow_dispatch:
+    inputs:
+      check-latest:
+        type: boolean
+        description: 'Use the most up-to-date version of Node.js even if locally cached version exists. 
+          Note that there will be performance implications as downloading versions of Node is slower than using cached versions.'
+        required: false
+        default: false
+        
+
+jobs:
+  build-and-test:
+    name: Build and run npm test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      matrix:
+        # Test on the newer Node.js versions having Active LTS or Maintenance LTS release statuses
+        # https://nodejs.org/en/about/previous-releases
+        node-version: [18.x, 20.x, 22.x]
+
+    steps:
+      # Step 1: Check out repository in order for the workflow to access it
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          check-latest: ${{ inputs.check-latest || false }}
+          cache-dependency-path: '**/package-lock.json'
+
+      # Step 3: Verify node and npm installation
+      - name: Verify node and npm installation
+        run: |
+          node -v
+          npm -v
+      
+      # Step 4: Perform clean installation of server dependencies
+      - name: (Clean) Install server dependencies
+        run: npm ci
+      
+      # Step 5: Perform clean installation of frontend dependencies
+      - name: (Clean) Install frontend dependencies
+        working-directory: ./client
+        run: npm ci
+      
+      # Step 6: Run npm test
+      - name: Run npm test
+        run: npm test
