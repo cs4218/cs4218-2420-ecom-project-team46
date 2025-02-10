@@ -1,0 +1,20 @@
+{
+  "roots": ["<rootDir>"],
+  "testMatch": [
+    "<rootDir>/config/*.test.js",
+    "<rootDir>/controllers/*.test.js",
+    "<rootDir>/helpers/*.test.js",
+    "<rootDir>/middlewares/*.test.js",
+    "<rootDir>/models/*.test.js",
+    "<rootDir>/routes/*.test.js"
+  ],
+  "transform": {
+    "^.+\\.jsx?$": "babel-jest"
+  },
+  "moduleNameMapper": {
+    "\\.(css|scss)$": "identity-obj-proxy"
+  },
+  "transformIgnorePatterns": ["/node_modules/"],
+  "testPathIgnorePatterns": ["/client/"],
+  "preset": "@shelf/jest-mongodb"
+}
