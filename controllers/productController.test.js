@@ -1,35 +1,52 @@
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import productModel from "../models/productModel"; // Path to your product model
+import productModel from "../models/productModel";
 import { createProductController } from "./productController";
 import fs from "fs";
 import { ObjectId } from "mongodb";
 
+// in-memory mongo server for testing
 let mongoServer;
 
-const res = {
-  status: jest.fn().mockReturnThis(),
-  send: jest.fn(),
-}; // mock res object to pass into controller
-
-// mock photo data and behaviour to use across test cases
+// dummy product and photo data, can be copied and modified if necessary within tests
+const productData = {
+  _id: new ObjectId(),
+  name: "Wireless Headphones",
+  description: "High-quality noise-canceling headphones.",
+  price: 199.99,
+  category: new ObjectId(),
+  quantity: 100,
+  shipping: true,
+};
 const photoData = {
   path: "./test-photo.jpg",
   type: "image/jpeg",
 };
 const photoBuffer = Buffer.from("dummy photo");
-fs.readFileSync = jest.fn().mockReturnValue(photoBuffer);
+
+// mock fs.readFileSync to return dummy photo or throw error for testing purposes
+jest.spyOn(fs, "readFileSync").mockImplementation((path) => {
+  if (path === photoData.path) {
+    return photoBuffer;
+  } else {
+    throw Error("Invalid photo path");
+  }
+});
+
+// mock res object, to keep track of status code (201/500) and response content within tests
+const res = {
+  status: jest.fn().mockReturnThis(),
+  send: jest.fn(),
+};
 
 describe("createProductController", () => {
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
-
     await mongoose.connect(mongoUri);
   });
 
   afterAll(async () => {
-    // Close the mongoose connection and stop the in-memory MongoDB server
     await mongoose.disconnect();
     await mongoServer.stop();
   });
@@ -39,26 +56,16 @@ describe("createProductController", () => {
   });
 
   test("should correctly create and save product", async () => {
-    const id = new ObjectId();
-    const categoryId = new ObjectId();
-    const productData = {
-      _id: id,
-      name: "Wireless Headphones",
-      description: "High-quality noise-canceling headphones.",
-      price: 199.99,
-      category: categoryId,
-      quantity: 100,
-      shipping: true,
-    };
     const req = { fields: productData, files: { photo: photoData } };
 
     await createProductController(req, res);
 
+    // query in-memory mongo collection for document
     const savedProduct = await productModel.findOne({
-      _id: id,
+      _id: productData._id,
     });
 
-    // check that the req fields are saved correctly into the product
+    // check that the req fields are saved correctly into the mongo document
     expect({
       _id: savedProduct._id,
       name: savedProduct.name,
@@ -69,7 +76,7 @@ describe("createProductController", () => {
       shipping: savedProduct.shipping,
     }).toEqual(productData);
 
-    // check that the photo data is correctly stored in the database
+    // check that the photo data is correctly stored in the mongo document
     expect(savedProduct.photo.data.toString("base64")).toEqual(
       photoBuffer.toString("base64")
     );
@@ -101,29 +108,83 @@ describe("createProductController", () => {
   ])(
     "should fail with 500 error when name/description/price/category/quantity field is missing",
     async ({ field, errorMessage }) => {
-      const id = new ObjectId();
-      const categoryId = new ObjectId();
+      // delete the field from productDataCopy to simulate it being missing
+      const productDataCopy = { ...productData };
+      delete productDataCopy[field];
+      expect(productDataCopy).not.toHaveProperty(field);
 
-      const productData = {
-        _id: id,
-        name: "Wireless Headphones",
-        description: "High-quality noise-canceling headphones.",
-        price: 199.99,
-        category: categoryId,
-        quantity: 100,
-        shipping: true,
-      };
-
-      delete productData[field];
-
-      expect(productData).not.toHaveProperty(field); // check that the field is now gone from the request
-
-      const req = { fields: productData, files: { photo: photoData } };
+      const req = { fields: productDataCopy, files: { photo: photoData } };
 
       await createProductController(req, res);
 
+      // expect validation switch case to return 500 error
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.send).toHaveBeenCalledWith({ error: errorMessage });
     }
   );
+
+  test.each([
+    { field: "name", value: "", errorMessage: "Name is Required" },
+    {
+      field: "description",
+      value: "",
+      errorMessage: "Description is Required",
+    },
+    { field: "price", value: 0, errorMessage: "Price is Required" },
+    { field: "category", value: "", errorMessage: "Category is Required" },
+    { field: "quantity", value: 0, errorMessage: "Quantity is Required" },
+  ])(
+    "should fail with 500 error when %s field is an empty string/0 for numerical values)",
+    async ({ field, value, errorMessage }) => {
+      // set the field to simulate it being empty string/0
+      const productDataCopy = { ...productData };
+      productDataCopy[field] = value;
+
+      const req = { fields: productDataCopy, files: { photo: photoData } };
+
+      await createProductController(req, res);
+
+      // expect validation switch case to return 500 error
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({ error: errorMessage });
+    }
+  );
+
+  test.each([
+    { size: 100000, statusCode: 201 },
+    { size: 999999, statusCode: 201 },
+    { size: 1000000, statusCode: 201 },
+    { size: 1000001, statusCode: 500 },
+    { size: 2000000, statusCode: 500 },
+  ])(
+    "should only allow photos <1MB to pass with status 201, 500 otherwise",
+    async ({ size, statusCode }) => {
+      const req = {
+        fields: productData,
+        files: { photo: { ...photoData, size: size } },
+      };
+      await createProductController(req, res);
+      expect(res.status).toHaveBeenCalledWith(statusCode);
+    }
+  );
+  test("should fail with 500 error when an error is thrown", async () => {
+    const req = {
+      fields: productData,
+      files: {
+        photo: {
+          path: "wrong-photo-path",
+          type: "image/jpeg",
+        },
+      },
+    };
+
+    await createProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      error: new Error("Invalid photo path"),
+      message: "Error in creating product",
+      success: false,
+    });
+  });
 });
