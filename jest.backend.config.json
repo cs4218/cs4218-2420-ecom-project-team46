@@ -15,6 +15,5 @@
     "\\.(css|scss)$": "identity-obj-proxy"
   },
   "transformIgnorePatterns": ["/node_modules/"],
-  "testPathIgnorePatterns": ["/client/"],
-  "preset": "@shelf/jest-mongodb"
+  "testPathIgnorePatterns": ["/client/"]
 }
