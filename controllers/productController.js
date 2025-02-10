@@ -101,7 +101,7 @@ export const getSingleProductController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Eror while getitng single product",
+      message: "Error while getitng single product",
       error,
     });
   }
@@ -128,11 +128,20 @@ export const productPhotoController = async (req, res) => {
 //delete controller
 export const deleteProductController = async (req, res) => {
   try {
-    await productModel.findByIdAndDelete(req.params.pid).select("-photo");
-    res.status(200).send({
-      success: true,
-      message: "Product Deleted successfully",
-    });
+    const dbResp = await productModel
+      .findByIdAndDelete(req.params.pid)
+      .select("-photo");
+    if (dbResp) {
+      res.status(200).send({
+        success: true,
+        message: "Product Deleted successfully",
+      });
+    } else {
+      res.status(404).send({
+        success: false,
+        message: "Product Not Found",
+      });
+    }
   } catch (error) {
     console.log(error);
     res.status(500).send({
@@ -143,51 +152,66 @@ export const deleteProductController = async (req, res) => {
   }
 };
 
-//upate producta
+// update products
 export const updateProductController = async (req, res) => {
   try {
-    const { name, description, price, category, quantity, shipping } =
-      req.fields;
-    const { photo } = req.files;
-    //alidation
-    switch (true) {
-      case !name:
-        return res.status(500).send({ error: "Name is Required" });
-      case !description:
-        return res.status(500).send({ error: "Description is Required" });
-      case !price:
-        return res.status(500).send({ error: "Price is Required" });
-      case !category:
-        return res.status(500).send({ error: "Category is Required" });
-      case !quantity:
-        return res.status(500).send({ error: "Quantity is Required" });
-      case photo && photo.size > 1000000:
-        return res
-          .status(500)
-          .send({ error: "photo is Required and should be less then 1mb" });
+    const { fields } = req;
+    const name = fields?.name;
+    const description = fields?.description;
+    const price = fields?.price;
+    const category = fields?.category;
+    const quantity = fields?.quantity;
+    const shipping = fields?.shipping;
+    const photo = req.files?.photo;
+
+    // Validate photo size if provided
+    if (photo && photo.size > 1000000) {
+      return res
+        .status(500)
+        .send({ error: "Photo is required and should be less than 1MB" });
     }
 
-    const products = await productModel.findByIdAndUpdate(
+    // Build the update object dynamically based on the fields provided
+    const updateData = {};
+
+    if (name) updateData.name = name;
+    if (description) updateData.description = description;
+    if (price) updateData.price = price;
+    if (category) updateData.category = category;
+    if (quantity) updateData.quantity = quantity;
+    if (shipping) updateData.shipping = shipping;
+    if (name) updateData.slug = slugify(name); // always update slug if name is provided
+    if (photo) {
+      updateData.photo = {
+        data: fs.readFileSync(photo.path),
+        contentType: photo.type,
+      };
+    }
+
+    console.log(req.params.pid);
+    console.log(updateData);
+    // Perform the update
+    const product = await productModel.findByIdAndUpdate(
       req.params.pid,
-      { ...req.fields, slug: slugify(name) },
+      updateData,
       { new: true }
     );
-    if (photo) {
-      products.photo.data = fs.readFileSync(photo.path);
-      products.photo.contentType = photo.type;
+
+    if (!product) {
+      return res.status(404).send({ error: "Product not found" });
     }
-    await products.save();
-    res.status(201).send({
+
+    res.status(200).send({
       success: true,
-      message: "Product Updated Successfully",
-      products,
+      message: "Product updated successfully",
+      product,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).send({
       success: false,
+      message: "Error updating product",
       error,
-      message: "Error in Updte product",
     });
   }
 };

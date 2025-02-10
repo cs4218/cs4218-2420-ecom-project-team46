@@ -3,12 +3,16 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import productModel from "../models/productModel";
 import {
   createProductController,
+  deleteProductController,
   getProductController,
+  getSingleProductController,
+  updateProductController,
 } from "./productController";
 import fs from "fs";
 import { ObjectId } from "mongodb";
 import { describe } from "node:test";
 import categoryModel from "../models/categoryModel";
+import slugify from "slugify";
 
 // in-memory mongo server for testing
 let mongoServer;
@@ -93,8 +97,7 @@ afterAll(async () => {
 
 // clear res mocks and remove all documents in product db collection before each test
 beforeEach(async () => {
-  res.status.mockClear();
-  res.send.mockClear();
+  jest.clearAllMocks();
   await productModel.deleteMany({});
   await categoryModel.deleteMany({});
 });
@@ -271,9 +274,6 @@ describe("createProductController tests", () => {
 });
 
 describe("getProductController tests", () => {
-  beforeEach(async () => {
-    await categoryModel.insertMany(categories);
-  });
   test("should succeed with no products when mongo is empty", async () => {
     expect(await productModel.countDocuments({})).toEqual(0);
     await getProductController({}, res);
@@ -285,6 +285,8 @@ describe("getProductController tests", () => {
     });
   });
   test("should succeed with products when mongo has documents", async () => {
+    await categoryModel.insertMany(categories);
+
     expect(await productModel.countDocuments({})).toEqual(0);
 
     for (let i = 0; i < products.length; i++) {
@@ -331,6 +333,215 @@ describe("getProductController tests", () => {
       success: false,
       message: "Error in getting products",
       error: error,
+    });
+    productModel.find.mockRestore();
+  });
+});
+
+describe("getSingleProductController tests", () => {
+  test("should successfully find product based on slug", async () => {
+    await categoryModel.insertMany(categories);
+
+    await createProductController(
+      { fields: products[0], files: { photo: photos[0] } },
+      res
+    );
+
+    await getSingleProductController(
+      { params: { slug: slugify(products[0].name) } },
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+    const lastCall = res.send.mock.lastCall[0];
+    expect(lastCall).toMatchObject({
+      success: true,
+      message: "Single Product Fetched",
+    });
+    expect(products[0]).toMatchObject({
+      _id: lastCall.product._id,
+      name: lastCall.product.name,
+      description: lastCall.product.description,
+      price: lastCall.product.price,
+      quantity: lastCall.product.quantity,
+      shipping: lastCall.product.shipping,
+    });
+    expect(lastCall.product.category).toMatchObject(categories[0]);
+  });
+  test("should fail with 500 error when an error is thrown", async () => {
+    jest.spyOn(productModel, "findOne");
+    const error = new Error("getSingleProductController Error");
+    productModel.findOne.mockImplementation(() => {
+      throw error;
+    });
+    await getSingleProductController({ params: { slug: "random-slug" } }, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenLastCalledWith({
+      success: false,
+      message: "Error while getitng single product",
+      error: error,
+    });
+    productModel.findOne.mockRestore();
+  });
+});
+
+describe("deleteProductController tests", () => {
+  test("should successfully delete product", async () => {
+    await createProductController(
+      { fields: products[0], files: { photo: photos[0] } },
+      res
+    );
+    await createProductController(
+      { fields: products[1], files: { photo: photos[1] } },
+      res
+    );
+    expect(await productModel.countDocuments({})).toBe(2);
+    await deleteProductController({ params: { pid: products[0]._id } }, res);
+
+    await productModel.find({});
+    expect(await productModel.countDocuments({})).toBe(1);
+    expect(res.status).toHaveBeenLastCalledWith(200);
+    expect(res.send).toHaveBeenLastCalledWith({
+      success: true,
+      message: "Product Deleted successfully",
+    });
+  });
+
+  test("should 404 and not delete any products if incorrect slug given", async () => {
+    await createProductController(
+      { fields: products[0], files: { photo: photos[0] } },
+      res
+    );
+    expect(await productModel.countDocuments({})).toBe(1);
+    await deleteProductController({ params: { pid: products[1]._id } }, res);
+    expect(await productModel.countDocuments({})).toBe(1);
+    expect(res.status).toHaveBeenLastCalledWith(404);
+    expect(res.send).toHaveBeenLastCalledWith({
+      success: false,
+      message: "Product Not Found",
+    });
+  });
+  test("should fail with 500 error when an error is thrown", async () => {
+    jest.spyOn(productModel, "findByIdAndDelete");
+    const error = new Error("deleteProductController Error");
+    productModel.findByIdAndDelete.mockImplementation(() => {
+      throw error;
+    });
+    await deleteProductController({ params: { pid: "random-pid" } }, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenLastCalledWith({
+      success: false,
+      message: "Error while deleting product",
+      error: error,
+    });
+    productModel.findByIdAndDelete.mockRestore();
+  });
+});
+
+describe("updateProductController tests", () => {
+  test.each([
+    {
+      req: { fields: { name: "newName" } },
+      fieldToUpdate: "name",
+      value: "newName",
+    },
+    {
+      req: { fields: { description: "newDescription" } },
+      fieldToUpdate: "description",
+      value: "newDescription",
+    },
+    {
+      req: { fields: { price: 91235.44 } },
+      fieldToUpdate: "price",
+      value: 91235.44,
+    },
+    {
+      req: { fields: { category: new ObjectId() } },
+      fieldToUpdate: "category",
+      value: new ObjectId(),
+    },
+    {
+      req: { fields: { quantity: 999 } },
+      fieldToUpdate: "quantity",
+      value: 999,
+    },
+    {
+      req: { fields: { shipping: false } },
+      fieldToUpdate: "shipping",
+      value: false,
+    },
+  ])("should successfully update fields (excl. photo)", async ({ req }) => {
+    await createProductController(
+      { fields: products[0], files: { photo: photos[0] } },
+      res
+    );
+
+    req.params = { pid: products[0]._id };
+    await updateProductController(req, res);
+
+    const savedProduct = await productModel.findOne({
+      _id: products[0]._id,
+    });
+
+    // check that the relevant fields are updated
+    expect(savedProduct[req.fieldToUpdate]).toEqual(req.value);
+
+    expect(res.status).toHaveBeenLastCalledWith(200);
+
+    // expect correct http response
+    const lastCall = res.send.mock.lastCall[0];
+    expect(lastCall).toMatchObject({
+      success: true,
+      message: "Product updated successfully",
+    });
+    expect(savedProduct).toMatchObject({
+      name: req.fieldToUpdate === "name" ? req.value : lastCall.product.name,
+      description:
+        req.fieldToUpdate === "description"
+          ? req.value
+          : lastCall.product.description,
+      price: req.fieldToUpdate === "price" ? req.value : lastCall.product.price,
+      category:
+        req.fieldToUpdate === "category"
+          ? req.value
+          : lastCall.product.category,
+      quantity:
+        req.fieldToUpdate === "quantity"
+          ? req.value
+          : lastCall.product.quantity,
+      shipping:
+        req.fieldToUpdate === "shipping"
+          ? req.value
+          : lastCall.product.shipping,
+    });
+  });
+
+  test("should successfully update photo", async () => {
+    await createProductController(
+      { fields: products[0], files: { photo: photos[0] } },
+      res
+    );
+    const initialData = await productModel.findOne({ _id: products[0]._id });
+    expect(initialData.photo.data.toString("base64")).toEqual(
+      photos[0].buffer.toString("base64")
+    );
+    expect(initialData.photo.contentType).toEqual(photos[0].type);
+    await updateProductController(
+      { params: { pid: products[0]._id }, files: { photo: photos[1] } },
+      res
+    );
+    const finalData = await productModel.findOne({ _id: products[0]._id });
+    expect(finalData.photo.data.toString("base64")).toEqual(
+      photos[1].buffer.toString("base64")
+    );
+    expect(finalData.photo.contentType).toEqual(photos[1].type);
+    expect(res.status).toHaveBeenLastCalledWith(200);
+    const lastCall = res.send.mock.lastCall[0];
+    expect(lastCall).toMatchObject({
+      success: true,
+      message: "Product updated successfully",
+    });
+    expect(finalData).toMatchObject({
+      ...products[0],
     });
   });
 });
