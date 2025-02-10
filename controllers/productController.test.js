@@ -41,7 +41,6 @@ describe("createProductController", () => {
   test("should correctly create and save product", async () => {
     const id = new ObjectId();
     const categoryId = new ObjectId();
-
     const productData = {
       _id: id,
       name: "Wireless Headphones",
@@ -51,7 +50,6 @@ describe("createProductController", () => {
       quantity: 100,
       shipping: true,
     };
-
     const req = { fields: productData, files: { photo: photoData } };
 
     await createProductController(req, res);
@@ -60,7 +58,8 @@ describe("createProductController", () => {
       _id: id,
     });
 
-    const savedProductData = {
+    // check that the req fields are saved correctly into the product
+    expect({
       _id: savedProduct._id,
       name: savedProduct.name,
       description: savedProduct.description,
@@ -68,17 +67,13 @@ describe("createProductController", () => {
       category: savedProduct.category,
       quantity: savedProduct.quantity,
       shipping: savedProduct.shipping,
-    };
-    const savedPhotoData = savedProduct.photo;
-
-    // check that the req fields are saved correctly into the product
-    expect(savedProductData).toEqual(productData);
+    }).toEqual(productData);
 
     // check that the photo data is correctly stored in the database
-    expect(savedPhotoData.data.toString("base64")).toEqual(
+    expect(savedProduct.photo.data.toString("base64")).toEqual(
       photoBuffer.toString("base64")
     );
-    expect(savedPhotoData.contentType).toEqual(photoData.type);
+    expect(savedProduct.photo.contentType).toEqual(photoData.type);
 
     // expect http response code 201 (created successfully)
     expect(res.status).toHaveBeenCalledWith(201);
@@ -88,12 +83,7 @@ describe("createProductController", () => {
       success: true,
       message: "Product Created Successfully",
       products: expect.objectContaining({
-        name: productData.name,
-        description: productData.description,
-        price: productData.price,
-        category: productData.category,
-        quantity: productData.quantity,
-        shipping: productData.shipping,
+        ...productData,
         photo: expect.objectContaining({
           contentType: photoData.type,
           data: expect.anything(),
