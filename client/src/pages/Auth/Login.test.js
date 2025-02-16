@@ -194,4 +194,22 @@ describe("Login Component", () => {
     // should match with Login.js instead of the message defined in the axios.post mock
     expect(toast.error).toHaveBeenCalledWith("Something went wrong");
   });
+
+  // during testing, when clicking on "Forgot Password", it results in 404
+  // Declaration: I used ChatGPT to assist in generating the test case below. The prompts were written by me, and I reviewed and validated the output to ensure accuracy and relevance to the requirements.
+  it("should navigate to forgot-password page when clicking 'Forgot Password' button", () => {
+    const { getByText } = render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<div>Forgot Password Page</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+  
+    fireEvent.click(getByText("Forgot Password"));
+  
+    expect(getByText("Forgot Password Page")).toBeInTheDocument();
+  });
+  
 });
