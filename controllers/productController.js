@@ -52,7 +52,6 @@ export const createProductController = async (req, res) => {
       products,
     });
   } catch (error) {
-    console.log(error);
     res.status(500).send({
       success: false,
       error,
@@ -188,8 +187,6 @@ export const updateProductController = async (req, res) => {
       };
     }
 
-    console.log(req.params.pid);
-    console.log(updateData);
     // Perform the update
     const product = await productModel.findByIdAndUpdate(
       req.params.pid,
