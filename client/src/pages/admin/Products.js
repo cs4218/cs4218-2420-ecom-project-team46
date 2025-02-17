@@ -10,7 +10,6 @@ const Products = () => {
   //getall products
   const getAllProducts = async () => {
     try {
-      console.log("HELLO");
       const { data } = await axios.get("/api/v1/product/get-product");
       console.log(data);
       setProducts(data.products);
