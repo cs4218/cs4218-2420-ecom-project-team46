@@ -1,6 +1,6 @@
 import React from "react";
 import { screen, render, act, fireEvent } from "@testing-library/react";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes, Route, useNavigate } from "react-router-dom";
 import "@testing-library/jest-dom/extend-expect";
 import ProductDetails from "./ProductDetails";
 import axios from "axios";
@@ -9,6 +9,10 @@ import toast from "react-hot-toast";
 
 jest.mock("axios");
 jest.mock("react-hot-toast");
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
+  useNavigate: jest.fn(),
+}));
 
 jest.mock("../context/auth", () => ({
   useAuth: jest.fn(() => [null, jest.fn()]),
@@ -189,5 +193,27 @@ describe("ProductDetails component tests", () => {
       checkButton(relatedProducts[index], button);
     });
     expect(toast.success).toHaveBeenCalledTimes(3);
+  });
+
+  it("should redirect when more details button is pressed", async () => {
+    const mockNavigate = jest.fn();
+    useNavigate.mockReturnValue(mockNavigate);
+    setAxiosMock(product, relatedProducts);
+    await act(async () =>
+      render(
+        <MemoryRouter initialEntries={[`/product/${product.slug}`]}>
+          <Routes>
+            <Route path="/product/:slug" element={<ProductDetails />} />
+          </Routes>
+        </MemoryRouter>
+      )
+    );
+    const moreDetailsButtons = screen.getAllByTestId("more-details");
+    moreDetailsButtons.forEach((button, index) => {
+      fireEvent.click(button);
+      expect(mockNavigate).toHaveBeenLastCalledWith(
+        `/product/${relatedProducts[index].slug}`
+      );
+    });
   });
 });
