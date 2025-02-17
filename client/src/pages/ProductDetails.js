@@ -109,6 +109,7 @@ const ProductDetails = () => {
                 </p>
                 <div className="card-name-price">
                   <button
+                    data-testid="more-details"
                     className="btn btn-info ms-1"
                     onClick={() => navigate(`/product/${p.slug}`)}
                   >
