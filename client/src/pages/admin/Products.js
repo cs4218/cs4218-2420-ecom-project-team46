@@ -3,7 +3,7 @@ import AdminMenu from "../../components/AdminMenu";
 import Layout from "./../../components/Layout";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 const Products = () => {
   const [products, setProducts] = useState([]);
 
@@ -11,10 +11,11 @@ const Products = () => {
   const getAllProducts = async () => {
     try {
       const { data } = await axios.get("/api/v1/product/get-product");
+      console.log(data);
       setProducts(data.products);
     } catch (error) {
       console.log(error);
-      toast.error("Someething Went Wrong");
+      toast.error("Something Went Wrong");
     }
   };
 
@@ -36,6 +37,7 @@ const Products = () => {
                 key={p._id}
                 to={`/dashboard/admin/product/${p.slug}`}
                 className="product-link"
+                data-testid="product-link"
               >
                 <div className="card m-2" style={{ width: "18rem" }}>
                   <img

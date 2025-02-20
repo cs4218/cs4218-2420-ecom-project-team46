@@ -40,17 +40,17 @@ const CreateProduct = () => {
     e.preventDefault();
     try {
       const productData = new FormData();
-      productData.append("name", name);
       productData.append("description", description);
       productData.append("price", price);
       productData.append("quantity", quantity);
       productData.append("photo", photo);
       productData.append("category", category);
-      const { data } = axios.post(
+      const { data } = await axios.post(
         "/api/v1/product/create-product",
         productData
       );
-      if (data?.success) {
+
+      if (data?.success === false) {
         toast.error(data?.message);
       } else {
         toast.success("Product Created Successfully");
@@ -73,7 +73,7 @@ const CreateProduct = () => {
             <h1>Create Product</h1>
             <div className="m-1 w-75">
               <Select
-                bordered={false}
+                variant="borderless"
                 placeholder="Select a category"
                 size="large"
                 showSearch
@@ -81,6 +81,7 @@ const CreateProduct = () => {
                 onChange={(value) => {
                   setCategory(value);
                 }}
+                data-testid="category-selector"
               >
                 {categories?.map((c) => (
                   <Option key={c._id} value={c._id}>
@@ -151,7 +152,7 @@ const CreateProduct = () => {
               </div>
               <div className="mb-3">
                 <Select
-                  bordered={false}
+                  variant="borderless"
                   placeholder="Select Shipping "
                   size="large"
                   showSearch
