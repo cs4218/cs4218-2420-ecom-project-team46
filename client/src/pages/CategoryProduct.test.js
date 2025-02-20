@@ -106,6 +106,7 @@ describe("CategoryProduct Component", () => {
       </MemoryRouter>
     );
 
+    await waitFor(() => expect(axios.get).toHaveBeenCalled());
     await waitFor(() => {expect(screen.getByText(`Category - ${category.name}`)).toBeInTheDocument();});
     await waitFor(() => {expect(screen.getByText(`${products.length} result found`)).toBeInTheDocument();});
   });
@@ -128,6 +129,7 @@ describe("CategoryProduct Component", () => {
       </MemoryRouter>
     );
 
+    await waitFor(() => expect(axios.get).toHaveBeenCalled());
     await waitFor(() => {
     products.forEach((product) => {
       expect(screen.getByText(product.name)).toBeInTheDocument();
@@ -154,6 +156,7 @@ describe("CategoryProduct Component", () => {
       </MemoryRouter>
     );
 
+    await waitFor(() => expect(axios.get).toHaveBeenCalled());
     await waitFor(() => {
       const buttons = screen.getAllByText("More Details");
       expect(buttons.length).toBe(products.length);
@@ -178,6 +181,7 @@ describe("CategoryProduct Component", () => {
       </MemoryRouter>
     );
 
+    await waitFor(() => expect(axios.get).toHaveBeenCalled());
     await waitFor(() => {expect(screen.getByText(`Category -`)).toBeInTheDocument();});
     await waitFor(() => {expect(screen.getByText(`0 result found`)).toBeInTheDocument();});
   });
@@ -193,6 +197,7 @@ describe("CategoryProduct Component", () => {
       </MemoryRouter>
     );
 
+    await waitFor(() => expect(axios.get).toHaveBeenCalled());
     await waitFor(() => {expect(screen.getByText(`Category -`)).toBeInTheDocument();});
     await waitFor(() => {expect(screen.getByText(`0 result found`)).toBeInTheDocument();});
   });

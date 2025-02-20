@@ -84,7 +84,7 @@ describe("Categories Component", () => {
     }
   });
 
-  it('should display nothing if no categories are available', () => {
+  it('should display nothing if no categories are available', async () => {
     useCategory.mockReturnValue([]);
 
     render(
