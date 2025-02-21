@@ -6,6 +6,7 @@ import {
   deleteProductController,
   getProductController,
   getSingleProductController,
+  productPhotoController,
   updateProductController,
 } from "./productController";
 import fs from "fs";
@@ -70,6 +71,7 @@ const categories = [
 const res = {
   status: jest.fn().mockReturnThis(),
   send: jest.fn(),
+  set: jest.fn(),
 };
 
 beforeAll(async () => {
@@ -582,6 +584,40 @@ describe("updateProductController tests", () => {
     });
     expect(finalData).toMatchObject({
       ...products[0],
+    });
+  });
+
+  describe("productPhotoController tests", () => {
+    test("productPhotoController should successfully get photo", async () => {
+      await categoryModel.insertMany(categories);
+      await createProductController(
+        { fields: products[0], files: { photo: photos[0] } },
+        res
+      );
+
+      await productPhotoController({ params: { pid: products[0]._id } }, res);
+      expect(res.status).toHaveBeenLastCalledWith(200);
+      expect(res.set).toHaveBeenLastCalledWith("Content-type", photos[0].type);
+      const lastCall = res.send.mock.lastCall[0];
+      expect(Buffer.compare(lastCall, photos[0].buffer)).toBe(0);
+    });
+
+    test("productPhotoController should fail with 500 error when an error is thrown", async () => {
+      // mock productModel.findById to throw an error for testing
+      jest.spyOn(productModel, "findById");
+      const error = new Error("productPhotoController Error");
+      productModel.findById.mockImplementation(() => {
+        throw error;
+      });
+      await productPhotoController({ params: { pid: "random-pid" } }, res);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenLastCalledWith({
+        success: false,
+        message: "Error while getting photo",
+        error: error,
+      });
+      // restore productModel.findById from mock functionality
+      productModel.findById.mockRestore();
     });
   });
 });
