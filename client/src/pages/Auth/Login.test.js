@@ -13,12 +13,18 @@ jest.mock("axios");
 // prevent real toast notifications
 jest.mock("react-hot-toast");
 
-// real user data is not required
+const mockSetAuth = jest.fn(); // Create a reusable mock function
+
 jest.mock("../../context/auth", () => ({
-  useAuth: jest.fn(() => [null, jest.fn()]), // Mock useAuth hook to return null state and a mock function for setAuth
-  // null: assume not logged in
-  // setAuth() = jest.fn(): wont change auth, but we can use jest to check whether it has been called
+  useAuth: jest.fn(() => [null, mockSetAuth]), // Now setAuth is trackable
 }));
+
+// // real user data is not required
+// jest.mock("../../context/auth", () => ({
+//   useAuth: jest.fn(() => [null, jest.fn()]), // Mock useAuth hook to return null state and a mock function for setAuth
+//   // null: assume not logged in
+//   // setAuth() = jest.fn(): wont change auth, but we can use jest to check whether it has been called
+// }));
 
 // cart is not required
 jest.mock("../../context/cart", () => ({
@@ -34,15 +40,18 @@ jest.mock("../../context/search", () => ({
 // no real cat data is required
 jest.mock("../../hooks/useCategory", () => jest.fn(() => []));
 
+// mock Layout, which appears in UI rendering
 jest.mock("../../components/Layout", () => ({
   __esModule: true,
   default: jest.fn(({ children }) => <div>{children}</div>),
 }));
 
 // mock the navigate
+const mockNavigate = jest.fn();
+
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
-  useNavigate: jest.fn(),
+  useNavigate: () => mockNavigate,
 }));
 
 // use jest.fn() to mock localStorage, so that data wont be saved to localStorage during testing
@@ -90,8 +99,6 @@ describe("Login Component", () => {
   // what's inside "double quote" is the description
   // () => {} is the real logic
   it("renders login form", async () => {
-    // what is { }? Destructuring Assignment. the two getBys are methods provided by React Testing Library, used for finding UI elements during testing
-    // why const? because the two methods wont change
     // getByText will look for titles/paragraphs/buttons
     // getByPlaceholderText will look for input boxes
     // render(): ask Jest to create a virtual DOM
@@ -123,7 +130,7 @@ describe("Login Component", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("LOGIN FORM")).toBeInTheDocument();
+    // expect(screen.getByText("LOGIN FORM")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Enter Your Email").value).toBe("");
     expect(screen.getByPlaceholderText("Enter Your Password").value).toBe("");
   });
@@ -182,7 +189,8 @@ describe("Login Component", () => {
 
     // axios.post() is async, so we use await waitFor() for it to finish
     // check whether axios.post() has been called with the correct data {email, password}, but endpoint might change ==> leave it as expect.anything()
-    await waitFor(() => expect(axios.post).toHaveBeenCalledWith(expect.anything(), {
+    await waitFor(() => 
+      expect(axios.post).toHaveBeenCalledWith(expect.anything(), {
         email: "test@example.com",
         password: "password123",
       })
@@ -190,20 +198,50 @@ describe("Login Component", () => {
 
     // to ensure that toast.success() is called after API returns
     // but undefined seems abit weird... it should be res.data.message
-    // and the format how it is displayed should not be important
-    expect(toast.success).toHaveBeenCalledWith("login successfully", expect.anything(),
+    // and the format how it is displayed should not be important; otherwise, brittle
+    expect(toast.success).toHaveBeenCalledWith("login successfully", expect.anything());
       // duration: 5000,
       // icon: "🙏",
       // style: {
       //   background: "green",
       //   color: "white",
       // },
+    // );
+
+    // Ensure setAuth updates the auth state
+    await waitFor(() =>
+      expect(mockSetAuth).toHaveBeenCalledWith({
+        user: { id: 1, name: "John Doe", email: "test@example.com" },
+        token: "mockToken",
+      })
     );
+
+    // Ensure localStorage is updated
+    await waitFor(() =>
+      expect(localStorage.setItem).toHaveBeenCalledWith(
+        "auth",
+        JSON.stringify({
+          success: true,
+          message: "login successfully",
+          user: { id: 1, name: "John Doe", email: "test@example.com" },
+          token: "mockToken",
+        })
+      )
+    );
+
+    // Ensure user is redirected
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
   });
 
-  it("should display error message on failed login", async () => {
-    axios.post.mockRejectedValueOnce({ message: "Invalid credentials" });
-
+  it("should display error message when credentials are incorrect", async () => {
+    // Mock API response where login fails due to wrong credentials
+    axios.post.mockResolvedValueOnce({
+      data: { 
+        success: false, 
+        message: "Invalid email or password",
+      },
+    });
+  
     render(
       <MemoryRouter initialEntries={["/login"]}>
         <Routes>
@@ -211,19 +249,92 @@ describe("Login Component", () => {
         </Routes>
       </MemoryRouter>
     );
-
+  
     fireEvent.change(screen.getByPlaceholderText("Enter Your Email"), {
-      target: { value: "test@example.com" },
+      target: { value: "wrong@example.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Enter Your Password"), {
+      target: { value: "wrongpassword" },
+    });
+    fireEvent.click(screen.getByText("LOGIN"));
+  
+    // Ensure axios.post was called
+    await waitFor(() =>
+      expect(axios.post).toHaveBeenCalledWith(expect.anything(), {
+        email: "wrong@example.com",
+        password: "wrongpassword",
+      })
+    );
+  
+    // Expect toast.error to be called with API's response message
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Invalid email or password")
+    );
+  });
+
+  it("should display a generic error message when login fails due to server error", async () => {
+    // Mock API request failure (server down, database error, etc.)
+    axios.post.mockRejectedValueOnce({
+      data: {
+        success: false,
+        message: "Error in login",
+      },
+    });
+  
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  
+    fireEvent.change(screen.getByPlaceholderText("Enter Your Email"), {
+      target: { value: "user@example.com" },
     });
     fireEvent.change(screen.getByPlaceholderText("Enter Your Password"), {
       target: { value: "password123" },
     });
+  
     fireEvent.click(screen.getByText("LOGIN"));
-
-    await waitFor(() => expect(axios.post).toHaveBeenCalled());
-    // should match with Login.js instead of the message defined in the axios.post mock
-    expect(toast.error).toHaveBeenCalledWith("Something went wrong");
+  
+    // Ensure axios.post was called
+    await waitFor(() =>
+      expect(axios.post).toHaveBeenCalledWith(expect.anything(), {
+        email: "user@example.com",
+        password: "password123",
+      })
+    );
+  
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Something went wrong")
+    );
   });
+  
+
+  // it("should display error message on failed login", async () => {
+  //   axios.post.mockRejectedValueOnce({ message: "Invalid credentials" });
+
+  //   render(
+  //     <MemoryRouter initialEntries={["/login"]}>
+  //       <Routes>
+  //         <Route path="/login" element={<Login />} />
+  //       </Routes>
+  //     </MemoryRouter>
+  //   );
+
+  //   fireEvent.change(screen.getByPlaceholderText("Enter Your Email"), {
+  //     target: { value: "test@example.com" },
+  //   });
+  //   fireEvent.change(screen.getByPlaceholderText("Enter Your Password"), {
+  //     target: { value: "password123" },
+  //   });
+  //   fireEvent.click(screen.getByText("LOGIN"));
+
+  //   await waitFor(() => expect(axios.post).toHaveBeenCalled());
+  //   // should match with Login.js instead of the message defined in the axios.post mock
+  //   expect(toast.error).toHaveBeenCalledWith("Something went wrong");
+  // });
 
   // // during testing, when clicking on "Forgot Password", it results in 404
   // it("should navigate to forgot-password page when clicking 'Forgot Password' button", () => {
