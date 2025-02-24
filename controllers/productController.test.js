@@ -1,7 +1,15 @@
-import mongoose from "mongoose";
+import { faker } from "@faker-js/faker";
+import braintree from "braintree";
+import fs from "fs";
+import { ObjectId } from "mongodb";
 import { MongoMemoryServer } from "mongodb-memory-server";
+import mongoose from "mongoose";
+import { describe } from "node:test";
+import slugify from "slugify";
+import categoryModel from "../models/categoryModel";
 import productModel from "../models/productModel";
 import {
+  braintreeTokenController,
   createProductController,
   deleteProductController,
   getProductController,
@@ -12,11 +20,6 @@ import {
   productPhotoController,
   updateProductController,
 } from "./productController";
-import fs from "fs";
-import { ObjectId } from "mongodb";
-import { describe } from "node:test";
-import categoryModel from "../models/categoryModel";
-import slugify from "slugify";
 
 // in-memory mongo server for testing
 let mongoServer;
@@ -191,6 +194,18 @@ const res = {
   send: jest.fn(),
   set: jest.fn(),
 };
+
+jest.mock("braintree", () => {
+  const generate = jest.fn();
+  return {
+    ...jest.requireActual("braintree"),
+    BraintreeGateway: jest.fn().mockImplementation(() => ({
+      clientToken: {
+        generate,
+      },
+    })),
+  };
+});
 
 beforeAll(async () => {
   // set up in-memory mongo database for all tests in this file
@@ -919,5 +934,36 @@ describe("updateProductController tests", () => {
       // restore productModel.find from mock functionality
       productModel.find.mockRestore();
     });
+  });
+});
+
+describe("braintreeTokenController tests", () => {
+  const gateway = new braintree.BraintreeGateway();
+  const req = {};
+
+  test("braintreeTokenController should generate and send client token successfully", async () => {
+    const mockedClientToken = {
+      clientToken: faker.internet.jwt().repeat(6),
+      success: true,
+    };
+    gateway.clientToken.generate.mockImplementation((_, callback) => {
+      callback(null, mockedClientToken);
+    });
+
+    await braintreeTokenController(req, res);
+
+    expect(res.send).toHaveBeenCalledWith(mockedClientToken);
+  });
+
+  test("braintreeTokenController should return 500 and send error on failure", async () => {
+    const error = new Error("Internal Server Error");
+    gateway.clientToken.generate.mockImplementation((_, callback) => {
+      callback(error);
+    });
+
+    await braintreeTokenController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith(error);
   });
 });
