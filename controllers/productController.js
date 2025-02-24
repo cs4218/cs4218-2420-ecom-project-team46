@@ -351,15 +351,19 @@ export const productCategoryController = async (req, res) => {
 //token
 export const braintreeTokenController = async (req, res) => {
   try {
-    gateway.clientToken.generate({}, function (err, response) {
-      if (err) {
-        res.status(500).send(err);
-      } else {
-        res.send(response);
-      }
+    const response = await new Promise((resolve, reject) => {
+      gateway.clientToken.generate({}, function (err, result) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
     });
+    res.send(response);
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    res.status(500).send(error);
   }
 };
 
