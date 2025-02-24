@@ -7,8 +7,10 @@ import mongoose from "mongoose";
 import { describe } from "node:test";
 import slugify from "slugify";
 import categoryModel from "../models/categoryModel";
+import orderModel from "../models/orderModel";
 import productModel from "../models/productModel";
 import {
+  brainTreePaymentController,
   braintreeTokenController,
   createProductController,
   deleteProductController,
@@ -193,19 +195,26 @@ const res = {
   status: jest.fn().mockReturnThis(),
   send: jest.fn(),
   set: jest.fn(),
+  json: jest.fn(),
 };
 
 jest.mock("braintree", () => {
   const generate = jest.fn();
+  const sale = jest.fn();
   return {
     ...jest.requireActual("braintree"),
     BraintreeGateway: jest.fn().mockImplementation(() => ({
       clientToken: {
         generate,
       },
+      transaction: {
+        sale,
+      },
     })),
   };
 });
+
+jest.mock("../models/orderModel");
 
 beforeAll(async () => {
   // set up in-memory mongo database for all tests in this file
@@ -962,6 +971,92 @@ describe("braintreeTokenController tests", () => {
     });
 
     await braintreeTokenController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith(error);
+  });
+});
+
+describe("brainTreePaymentController tests", () => {
+  const gateway = new braintree.BraintreeGateway();
+  const nonce = "fake-nonce";
+  const req = {
+    body: {
+      nonce,
+      cart: [
+        { price: parseFloat(faker.commerce.price()) },
+        { price: parseFloat(faker.commerce.price()) },
+        { price: parseFloat(faker.commerce.price()) },
+      ],
+    },
+    user: {
+      _id: faker.string.uuid(),
+    },
+  };
+
+  test("brainTreePaymentController should process payment and create an order on successful transaction", async () => {
+    const mockedSuccessfulSaleTransaction = {
+      success: true,
+      message: "Payment successful",
+    };
+    const mockOrder = {
+      _id: faker.string.uuid(),
+      products: req.body.cart,
+      payment: mockedSuccessfulSaleTransaction,
+    };
+    gateway.transaction.sale.mockImplementation((_, callback) => {
+      callback(null, mockedSuccessfulSaleTransaction);
+    });
+    orderModel.create.mockResolvedValue(mockOrder);
+
+    await brainTreePaymentController(req, res);
+
+    expect(gateway.transaction.sale).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amount: req.body.cart
+          .reduce((acc, item) => acc + item.price, 0)
+          .toFixed(2),
+        paymentMethodNonce: nonce,
+        options: {
+          submitForSettlement: true,
+        },
+      }),
+      expect.any(Function)
+    );
+    expect(orderModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        products: req.body.cart,
+        payment: mockedSuccessfulSaleTransaction,
+        buyer: req.user._id,
+      })
+    );
+    expect(res.json).toHaveBeenCalledWith({ ok: true, order: mockOrder });
+  });
+
+  test("brainTreePaymentController should return 402 and send error on payment failure", async () => {
+    const mockedFailedSaleTransaction = {
+      success: false,
+      message: "Payment failed",
+    };
+    gateway.transaction.sale.mockImplementation((_, callback) => {
+      callback(null, mockedFailedSaleTransaction);
+    });
+
+    await brainTreePaymentController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(402);
+    expect(res.send).toHaveBeenCalledWith({
+      error: mockedFailedSaleTransaction.message,
+    });
+  });
+
+  test("brainTreePaymentController should return 500 and send error on failure", async () => {
+    const error = new Error("Internal Server Error");
+    gateway.transaction.sale.mockImplementation((_, callback) => {
+      callback(error);
+    });
+
+    await brainTreePaymentController(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.send).toHaveBeenCalledWith(error);
