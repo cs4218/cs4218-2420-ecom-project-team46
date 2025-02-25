@@ -75,13 +75,13 @@ window.matchMedia =
     };
   };
 
-  beforeAll(() => {
-    jest.clearAllMocks();
-  });
-  
-  afterAll(() => {
-    cleanup();
-  });
+beforeAll(() => {
+  jest.clearAllMocks();
+});
+
+afterAll(() => {
+  cleanup();
+});
 
 // describe: to organize multiple test cases
 describe("Login Component", () => {
