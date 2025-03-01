@@ -21,6 +21,9 @@ import {
   productListController,
   productPhotoController,
   updateProductController,
+  searchProductController,
+  relatedProductController,
+  productCategoryController
 } from "./productController";
 
 // in-memory mongo server for testing
@@ -188,6 +191,133 @@ const categories = [
     name: "cat7",
     slug: "cat7",
   },
+];
+
+// mock objects for product and category search
+
+const categortId1 = new ObjectId();
+const categortId2 = new ObjectId();
+const categortId3 = new ObjectId();
+const categortId4 = new ObjectId();
+const productId1 = new ObjectId();
+const productId2 = new ObjectId();
+const productId3 = new ObjectId();
+
+const categoriesSearch = [
+  {
+    _id: categortId1,
+    name: "cat0",
+    slug: "cat0",
+  },
+  {
+    _id: categortId2,
+    name: "cat1",
+    slug: "cat1",
+  },
+  {
+    _id: categortId3,
+    name: "cat2",
+    slug: "cat2",
+  },
+  {
+    _id: categortId4,
+    name: "cat3",
+    slug: "cat3",
+  },
+];
+
+const productsSearch = [
+  {
+    _id: productId1,
+    name: "Wireless Headphones",
+    description: "High-quality noise-canceling headphones with long battery life.",
+    price: 199.99,
+    category: categortId1,
+    quantity: 100,
+    shipping: true,
+  },
+  {
+    _id: productId2,
+    name: "Bluetooth Speaker",
+    description: "Portable speaker with deep bass and clear sound.",
+    price: 49.99,
+    category: categortId2,
+    quantity: 250,
+    shipping: true,
+  },
+  {
+    _id: productId3,
+    name: "Card Games",
+    description: "Fun for family and friends.",
+    price: 145,
+    category: categortId3,
+    quantity: 10,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "Wired Speaker",
+    description: "Wired speaker having good quality.",
+    price: 145,
+    category: categortId2,
+    quantity: 10,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "High-end Speaker",
+    description: "Luxurious experience for audiophiles.",
+    price: 299.50,
+    category: categortId2,
+    quantity: 7,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "Audio Soundbar",
+    description: "For home movie experience.",
+    price: 88.88,
+    category: categortId2,
+    quantity: 200,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "Speaker",
+    description: "Popular item.",
+    price: 11.11,
+    category: categortId2,
+    quantity: 1220,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "Board Games",
+    description: "Great entertainment.",
+    price: 14.20,
+    category: categortId3,
+    quantity: 64,
+    shipping: true,
+  },
+];
+
+const searchProductsResults = [
+  {searchPhrase: "speaker", numResults: 4},
+  {searchPhrase: "headphone", numResults: 1},
+  {searchPhrase: "HEADPHONES", numResults: 1},
+  {searchPhrase: "testphrase", numResults: 0},
+];
+
+const relatedProductsResults = [
+  {pid: productId1, cid: categortId1, numResults: 0},
+  {pid: productId2, cid: categortId2, numResults: 3},
+  {pid: productId3, cid: categortId3, numResults: 1},
+];
+
+const searchProductCategoryResults = [
+  {slug: categoriesSearch[0].slug, numResults: 1},
+  {slug: categoriesSearch[1].slug, numResults: 5},
+  {slug: categoriesSearch[3].slug, numResults: 0},
 ];
 
 // mock res object, to keep track of status code (201/500) and response content within tests
@@ -1060,5 +1190,165 @@ describe("brainTreePaymentController tests", () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.send).toHaveBeenCalledWith(error);
+  });
+});
+
+describe("searchProductController tests", () => {
+
+  test.each(searchProductsResults)
+  ("searchProductController should return matching products based on keyword", 
+    async ({searchPhrase, numResults}) => {
+
+    for (let i = 0; i < productsSearch.length; i += 1 ) {
+      await createProductController(
+        { fields: productsSearch[i], files: { photo: photos[i] } },
+        res
+      );
+    }
+
+    const req = { params: { keyword: searchPhrase } };
+
+    await searchProductController(req, res);
+
+    expect(res.json).toHaveBeenCalledTimes(1);
+
+    const jsonResponse = res.json.mock.calls[0][0];
+
+    const regex = new RegExp(searchPhrase, "i");
+    const allMatch = jsonResponse.every((product) =>
+      regex.test(product.name) || regex.test(product.description)
+    );
+
+    expect(allMatch).toBe(true);
+    expect(jsonResponse.length).toBe(numResults); 
+  });
+
+  test("searchProductController should handle errors and return status 400", async () => {
+    jest.spyOn(productModel, "find");
+    const error = new Error("searchProductController Error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+
+    const req = { params: { keyword: "test" } };
+
+    await searchProductController(req, res);
+
+    //check that error is thrown
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenLastCalledWith({
+      success: false,
+      message: "Error in search product API",
+      error: error,
+    });
+
+    // restore productModel.find from mock functionality
+    productModel.find.mockRestore();
+  });
+});
+
+describe("relatedProductController tests", () => {
+
+  test.each(relatedProductsResults)
+  ("relatedProductController should return matching products based on category", 
+    async ({pid, cid, numResults}) => {
+
+    await categoryModel.insertMany(categoriesSearch);
+
+    for (let i = 0; i < productsSearch.length; i += 1 ) {
+      await createProductController(
+        { fields: productsSearch[i], files: { photo: photos[0] } },
+        res
+    )};
+
+    const req = { params: { pid, cid } };
+
+    await relatedProductController(req, res);
+
+    expect(res.status).toHaveBeenLastCalledWith(200);
+
+    const jsonResponse = res.send.mock.lastCall[0].products;
+
+    const allCorrectCategory = jsonResponse.every(
+      (product) => product.category._id.toString() === cid.toString());
+    expect(allCorrectCategory).toBe(true);
+
+    expect(jsonResponse.length).toBe(numResults); 
+  });
+
+  test("relatedProductController should handle errors and return status 400", async () => {
+    jest.spyOn(productModel, "find");
+    const error = new Error("relatedProductController Error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+
+    const req = { params: { keyword: "test" } };
+
+    await relatedProductController(req, res);
+
+    //check that error is thrown
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenLastCalledWith({
+      success: false,
+      message: "Error while getting related product",
+      error: error,
+    });
+
+    // restore productModel.find from mock functionality
+    productModel.find.mockRestore();
+  });
+});
+
+describe("productCategoryController tests", () => {
+
+  test.each(searchProductCategoryResults)
+  ("productCategoryController should return matching products based on category slug", 
+    async ({slug, numResults}) => {
+
+    await categoryModel.insertMany(categoriesSearch);
+
+    for (let i = 0; i < productsSearch.length; i += 1 ) {
+      await createProductController(
+        { fields: productsSearch[i], files: { photo: photos[0] } },
+        res
+    )};
+
+    const req = { params: { slug } };
+
+    await productCategoryController(req, res);
+
+    expect(res.status).toHaveBeenLastCalledWith(200);
+
+    const jsonResponse = res.send.mock.lastCall[0].products;
+
+    const allCorrectCategory = jsonResponse.every(
+      (product) => product.category.slug === slug);
+    expect(allCorrectCategory).toBe(true);
+
+    expect(jsonResponse.length).toBe(numResults); 
+  });
+
+  test("productCategoryController should handle errors and return status 400", async () => {
+    jest.spyOn(productModel, "find");
+    const error = new Error("productCategoryController Error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+
+    const req = { params: { keyword: "test" } };
+
+    await productCategoryController(req, res);
+
+    //check that error is thrown
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenLastCalledWith({
+      success: false,
+      message: "Error while getting products",
+      error: error,
+    });
+
+    // restore productModel.find from mock functionality
+    productModel.find.mockRestore();
   });
 });
