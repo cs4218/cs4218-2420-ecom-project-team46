@@ -47,7 +47,7 @@ export const updateCategoryController = async (req, res) => {
     );
     res.status(200).send({
       success: true,
-      messsage: "Category updated successfully",
+      message: "Category updated successfully",
       category,
     });
   } catch (error) {
