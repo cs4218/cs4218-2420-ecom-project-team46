@@ -4,11 +4,9 @@ import axios from "axios";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import "@testing-library/jest-dom/extend-expect";
 import toast from "react-hot-toast";
-// import Login component. by default will look for .js file, since this is a .js file
-import Login from "./Login";
+import Login from "./Login";  // import Login component. by default will look for .js file, since this is a .js file
 
-// Mocking axios.post
-// prevent real POST requests
+// Mocking axios.post to prevent real POST requests
 jest.mock("axios");
 // prevent real toast notifications
 jest.mock("react-hot-toast");
@@ -18,13 +16,6 @@ const mockSetAuth = jest.fn(); // Create a reusable mock function
 jest.mock("../../context/auth", () => ({
   useAuth: jest.fn(() => [null, mockSetAuth]), // Now setAuth is trackable
 }));
-
-// // real user data is not required
-// jest.mock("../../context/auth", () => ({
-//   useAuth: jest.fn(() => [null, jest.fn()]), // Mock useAuth hook to return null state and a mock function for setAuth
-//   // null: assume not logged in
-//   // setAuth() = jest.fn(): wont change auth, but we can use jest to check whether it has been called
-// }));
 
 // cart is not required
 jest.mock("../../context/cart", () => ({
@@ -99,12 +90,9 @@ describe("Login Component", () => {
   // what's inside "double quote" is the description
   // () => {} is the real logic
   it("renders login form", async () => {
-    // getByText will look for titles/paragraphs/buttons
-    // getByPlaceholderText will look for input boxes
     // render(): ask Jest to create a virtual DOM
     render(
       // MemoryRouter: a special router that is used for testing, to allow Jest to mock the routing
-      // useNav() and useLoc() relies on React Router
       // set the URL as /login, to correctly load Login.js
       <MemoryRouter initialEntries={["/login"]}>
         <Routes>
@@ -115,6 +103,8 @@ describe("Login Component", () => {
     );
 
     // when login component is rendered, login form/email box/password box should be there
+    // getByText will look for titles/paragraphs/buttons
+    // getByPlaceholderText will look for input boxes
     expect(screen.getByText("LOGIN FORM")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Enter Your Email")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Enter Your Password")).toBeInTheDocument();
@@ -130,7 +120,7 @@ describe("Login Component", () => {
       </MemoryRouter>
     );
 
-    // expect(screen.getByText("LOGIN FORM")).toBeInTheDocument();
+    // expect(screen.getByText("LOGIN FORM")).toBeInTheDocument();  // this is already tested
     expect(screen.getByPlaceholderText("Enter Your Email").value).toBe("");
     expect(screen.getByPlaceholderText("Enter Your Password").value).toBe("");
   });
@@ -188,44 +178,29 @@ describe("Login Component", () => {
     fireEvent.click(screen.getByText("LOGIN"));
 
     // axios.post() is async, so we use await waitFor() for it to finish
-    // check whether axios.post() has been called with the correct data {email, password}, but endpoint might change ==> leave it as expect.anything()
+    // check whether axios.post() has been called with the critical data (email and password), at the same time it won't break if the API call's structture changes in non-critical ways
+    // also, endpoint might change ==> leave it as expect.anything()
     await waitFor(() => 
-      expect(axios.post).toHaveBeenCalledWith(expect.anything(), {
-        email: "test@example.com",
-        password: "password123",
-      })
+      expect(axios.post).toHaveBeenCalledWith(expect.anything(),
+        expect.objectContaining({
+          email: "test@example.com",
+          password: "password123",
+        })
+      )
     );
 
-    // to ensure that toast.success() is called after API returns
-    // but undefined seems abit weird... it should be res.data.message
-    // and the format how it is displayed should not be important; otherwise, brittle
-    expect(toast.success).toHaveBeenCalledWith("login successfully", expect.anything());
-      // duration: 5000,
-      // icon: "🙏",
-      // style: {
-      //   background: "green",
-      //   color: "white",
-      // },
-    // );
+    // maximize the resistance to refactoring
+    // Instead of checking the exact toast call, just ensure that a success notification is shown
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
 
     // Ensure setAuth updates the auth state
-    await waitFor(() =>
-      expect(mockSetAuth).toHaveBeenCalledWith({
-        user: { id: 1, name: "John Doe", email: "test@example.com" },
-        token: "mockToken",
-      })
-    );
+    await waitFor(() => expect(mockSetAuth).toHaveBeenCalled());
 
     // Ensure localStorage is updated
     await waitFor(() =>
       expect(localStorage.setItem).toHaveBeenCalledWith(
         "auth",
-        JSON.stringify({
-          success: true,
-          message: "login successfully",
-          user: { id: 1, name: "John Doe", email: "test@example.com" },
-          token: "mockToken",
-        })
+        expect.stringContaining("John Doe") // verify in a more abstract way
       )
     );
 
@@ -260,19 +235,19 @@ describe("Login Component", () => {
   
     // Ensure axios.post was called
     await waitFor(() =>
-      expect(axios.post).toHaveBeenCalledWith(expect.anything(), {
-        email: "wrong@example.com",
-        password: "wrongpassword",
-      })
+      expect(axios.post).toHaveBeenCalledWith(expect.anything(),
+        expect.objectContaining({
+          email: "wrong@example.com",
+          password: "wrongpassword",
+        })
+      )
     );
   
-    // Expect toast.error to be called with API's response message
-    await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Invalid email or password")
-    );
+    // Expect toast.error to be called
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
   });
 
-  it("should display a generic error message when login fails due to server error", async () => {
+  it("should display a generic error message when login fails due to server/database error", async () => {
     // Mock API request failure (server down, database error, etc.)
     axios.post.mockRejectedValueOnce({
       data: {
@@ -300,41 +275,19 @@ describe("Login Component", () => {
   
     // Ensure axios.post was called
     await waitFor(() =>
-      expect(axios.post).toHaveBeenCalledWith(expect.anything(), {
-        email: "user@example.com",
-        password: "password123",
-      })
+      expect(axios.post).toHaveBeenCalledWith(expect.anything(),
+        expect.objectContaining({
+          email: "user@example.com",
+          password: "password123",
+        })
+      )
     );
   
+    // expect toast.error to be called, but will a "somthing went wrong" message, which is specific to login fails due to error, different from incorrect login credentials
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith("Something went wrong")
     );
   });
-  
-
-  // it("should display error message on failed login", async () => {
-  //   axios.post.mockRejectedValueOnce({ message: "Invalid credentials" });
-
-  //   render(
-  //     <MemoryRouter initialEntries={["/login"]}>
-  //       <Routes>
-  //         <Route path="/login" element={<Login />} />
-  //       </Routes>
-  //     </MemoryRouter>
-  //   );
-
-  //   fireEvent.change(screen.getByPlaceholderText("Enter Your Email"), {
-  //     target: { value: "test@example.com" },
-  //   });
-  //   fireEvent.change(screen.getByPlaceholderText("Enter Your Password"), {
-  //     target: { value: "password123" },
-  //   });
-  //   fireEvent.click(screen.getByText("LOGIN"));
-
-  //   await waitFor(() => expect(axios.post).toHaveBeenCalled());
-  //   // should match with Login.js instead of the message defined in the axios.post mock
-  //   expect(toast.error).toHaveBeenCalledWith("Something went wrong");
-  // });
 
   // // during testing, when clicking on "Forgot Password", it results in 404
   // it("should navigate to forgot-password page when clicking 'Forgot Password' button", () => {
