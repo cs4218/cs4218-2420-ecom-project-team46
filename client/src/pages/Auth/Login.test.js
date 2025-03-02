@@ -244,7 +244,8 @@ describe("Login Component", () => {
     );
   
     // Expect toast.error to be called
-    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    await waitFor(() => 
+      expect(toast.error).toHaveBeenCalledWith("Invalid email or password"));
   });
 
   it("should display a generic error message when login fails due to server/database error", async () => {
