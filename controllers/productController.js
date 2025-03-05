@@ -118,7 +118,7 @@ export const productPhotoController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Erorr while getting photo",
+      message: "Error while getting photo",
       error,
     });
   }
@@ -229,7 +229,7 @@ export const productFiltersController = async (req, res) => {
     console.log(error);
     res.status(400).send({
       success: false,
-      message: "Error WHile Filtering Products",
+      message: "Error while Filtering Products",
       error,
     });
   }
@@ -282,7 +282,7 @@ export const productListController = async (req, res) => {
 export const searchProductController = async (req, res) => {
   try {
     const { keyword } = req.params;
-    const resutls = await productModel
+    const results = await productModel
       .find({
         $or: [
           { name: { $regex: keyword, $options: "i" } },
@@ -290,19 +290,19 @@ export const searchProductController = async (req, res) => {
         ],
       })
       .select("-photo");
-    res.json(resutls);
+    res.json(results);
   } catch (error) {
     console.log(error);
     res.status(400).send({
       success: false,
-      message: "Error In Search Product API",
+      message: "Error in search product API",
       error,
     });
   }
 };
 
 // similar products
-export const realtedProductController = async (req, res) => {
+export const relatedProductController = async (req, res) => {
   try {
     const { pid, cid } = req.params;
     const products = await productModel
@@ -321,13 +321,13 @@ export const realtedProductController = async (req, res) => {
     console.log(error);
     res.status(400).send({
       success: false,
-      message: "error while geting related product",
+      message: "Error while getting related product",
       error,
     });
   }
 };
 
-// get prdocyst by catgory
+// get products by catgory
 export const productCategoryController = async (req, res) => {
   try {
     const category = await categoryModel.findOne({ slug: req.params.slug });
@@ -342,7 +342,7 @@ export const productCategoryController = async (req, res) => {
     res.status(400).send({
       success: false,
       error,
-      message: "Error While Getting products",
+      message: "Error while getting products",
     });
   }
 };
@@ -351,15 +351,19 @@ export const productCategoryController = async (req, res) => {
 //token
 export const braintreeTokenController = async (req, res) => {
   try {
-    gateway.clientToken.generate({}, function (err, response) {
-      if (err) {
-        res.status(500).send(err);
-      } else {
-        res.send(response);
-      }
+    const response = await new Promise((resolve, reject) => {
+      gateway.clientToken.generate({}, function (err, result) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
     });
+    res.send(response);
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    res.status(500).send(error);
   }
 };
 
@@ -367,32 +371,35 @@ export const braintreeTokenController = async (req, res) => {
 export const brainTreePaymentController = async (req, res) => {
   try {
     const { nonce, cart } = req.body;
-    let total = 0;
-    cart.map((i) => {
-      total += i.price;
-    });
-    let newTransaction = gateway.transaction.sale(
+    const total = cart.reduce((acc, item) => acc + item.price, 0);
+
+    gateway.transaction.sale(
       {
-        amount: total,
+        amount: total.toFixed(2),
         paymentMethodNonce: nonce,
         options: {
           submitForSettlement: true,
         },
       },
-      function (error, result) {
-        if (result) {
-          const order = new orderModel({
+      async function (error, result) {
+        if (error) {
+          return res.status(500).send(error);
+        }
+
+        if (result.success) {
+          const order = await orderModel.create({
             products: cart,
             payment: result,
             buyer: req.user._id,
-          }).save();
-          res.json({ ok: true });
+          });
+          res.json({ ok: true, order });
         } else {
-          res.status(500).send(error);
+          res.status(402).send({ error: result.message });
         }
       }
     );
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    res.status(500).send(error);
   }
 };
