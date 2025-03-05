@@ -78,7 +78,7 @@ export const loginController = async (req, res) => {
     // shouldn't be so explicit about whether the email or password is incorrect?
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(404).send({
+      return res.status(200).send({
         success: false,
         message: "Email is not registerd",
       });
