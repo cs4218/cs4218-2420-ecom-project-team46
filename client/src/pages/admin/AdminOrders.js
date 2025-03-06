@@ -2,6 +2,7 @@ import { Select } from "antd";
 import axios from "axios";
 import moment from "moment";
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import AdminMenu from "../../components/AdminMenu";
 import Layout from "../../components/Layout";
 import { useAuth } from "../../context/auth";
@@ -29,8 +30,10 @@ const AdminOrders = () => {
       await axios.put(`/api/v1/auth/order-status/${orderId}`, {
         status: value,
       });
+      toast.success("Order status successfully updated.");
       getOrders();
     } catch (error) {
+      toast.error("Order status change failed. Please try again later.");
       console.log(error);
     }
   };
