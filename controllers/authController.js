@@ -74,7 +74,7 @@ export const loginController = async (req, res) => {
       });
     }
     //check user
-    
+
     // shouldn't be so explicit about whether the email or password is incorrect?
     const user = await userModel.findOne({ email });
     if (!user) {
@@ -225,7 +225,7 @@ export const getAllOrdersController = async (req, res) => {
       .find({})
       .populate("products", "-photo")
       .populate("buyer", "name")
-      .sort({ createdAt: "-1" });
+      .sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
     console.log(error);
