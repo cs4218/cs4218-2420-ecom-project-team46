@@ -4,6 +4,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import "../../styles/AuthStyles.css";
+
+// define Register component. no props; all states are handled locally.
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -63,7 +65,7 @@ const Register = () => {
               onChange={(e) => setEmail(e.target.value)}
               className="form-control"
               id="exampleInputEmail1"
-              placeholder="Enter Your Email "
+              placeholder="Enter Your Email"  // removed one extra space after Email
               required
             />
           </div>
@@ -122,6 +124,7 @@ const Register = () => {
               required
             />
           </div>
+          {/* consider adding in a loading variable to prevent user double clicking */}
           <button type="submit" className="btn btn-primary">
             REGISTER
           </button>

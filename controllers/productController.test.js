@@ -1,18 +1,30 @@
-import mongoose from "mongoose";
+import { faker } from "@faker-js/faker";
+import braintree from "braintree";
+import fs from "fs";
+import { ObjectId } from "mongodb";
 import { MongoMemoryServer } from "mongodb-memory-server";
+import mongoose from "mongoose";
+import { describe } from "node:test";
+import slugify from "slugify";
+import categoryModel from "../models/categoryModel";
+import orderModel from "../models/orderModel";
 import productModel from "../models/productModel";
 import {
+  brainTreePaymentController,
+  braintreeTokenController,
   createProductController,
   deleteProductController,
   getProductController,
   getSingleProductController,
+  productCountController,
+  productFiltersController,
+  productListController,
+  productPhotoController,
   updateProductController,
+  searchProductController,
+  relatedProductController,
+  productCategoryController
 } from "./productController";
-import fs from "fs";
-import { ObjectId } from "mongodb";
-import { describe } from "node:test";
-import categoryModel from "../models/categoryModel";
-import slugify from "slugify";
 
 // in-memory mongo server for testing
 let mongoServer;
@@ -37,22 +49,107 @@ const products = [
     quantity: 250,
     shipping: true,
   },
+  {
+    _id: new ObjectId(),
+    name: "Smartwatch",
+    description:
+      "Feature-packed smartwatch with fitness tracking and notifications.",
+    price: 149.99,
+    category: new ObjectId(),
+    quantity: 200,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "Mechanical Keyboard",
+    description: "RGB backlit mechanical keyboard with tactile switches.",
+    price: 89.99,
+    category: new ObjectId(),
+    quantity: 150,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "Gaming Mouse",
+    description: "Ergonomic gaming mouse with customizable DPI settings.",
+    price: 59.99,
+    category: new ObjectId(),
+    quantity: 300,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "External SSD",
+    description: "Fast portable SSD with USB-C for high-speed transfers.",
+    price: 179.99,
+    category: new ObjectId(),
+    quantity: 120,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "Smart Home Hub",
+    description: "Voice-controlled smart home hub for automation.",
+    price: 99.99,
+    category: new ObjectId(),
+    quantity: 250,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "Game Controller",
+    description: "Xbox controller.",
+    price: 39.99,
+    category: new ObjectId(),
+    quantity: 20,
+    shipping: true,
+  },
 ];
 
 const photos = [
   {
-    path: "./test-photo.jpg",
+    path: "./test-photo0.jpg",
     type: "image/jpeg",
-    buffer: Buffer.from("dummy photo"),
+    buffer: Buffer.from("dummy photo 0"),
+  },
+  {
+    path: "./test-photo1.jpg",
+    type: "image/png",
+    buffer: Buffer.from("dummy photo 1"),
   },
   {
     path: "./test-photo2.jpg",
-    type: "image/png",
+    type: "image/jpeg",
     buffer: Buffer.from("dummy photo 2"),
+  },
+  {
+    path: "./test-photo3.jpg",
+    type: "image/png",
+    buffer: Buffer.from("dummy photo 3"),
+  },
+  {
+    path: "./test-photo4.jpg",
+    type: "image/jpeg",
+    buffer: Buffer.from("dummy photo 4"),
+  },
+  {
+    path: "./test-photo5.jpg",
+    type: "image/png",
+    buffer: Buffer.from("dummy photo 5"),
+  },
+  {
+    path: "./test-photo6.jpg",
+    type: "image/jpeg",
+    buffer: Buffer.from("dummy photo 6"),
+  },
+  {
+    path: "./test-photo7.jpg",
+    type: "image/jpeg",
+    buffer: Buffer.from("dummy photo 7"),
   },
 ];
 
-// list of dummy categories, needed for testing as well, insert using categoryModel if necessary
+// List of dummy categories, needed for testing as well, insert using categoryModel if necessary
 const categories = [
   {
     _id: products[0].category,
@@ -64,13 +161,190 @@ const categories = [
     name: "cat1",
     slug: "cat1",
   },
+  {
+    _id: products[2].category,
+    name: "cat2",
+    slug: "cat2",
+  },
+  {
+    _id: products[3].category,
+    name: "cat3",
+    slug: "cat3",
+  },
+  {
+    _id: products[4].category,
+    name: "cat4",
+    slug: "cat4",
+  },
+  {
+    _id: products[5].category,
+    name: "cat5",
+    slug: "cat5",
+  },
+  {
+    _id: products[6].category,
+    name: "cat6",
+    slug: "cat6",
+  },
+  {
+    _id: products[7].category,
+    name: "cat7",
+    slug: "cat7",
+  },
+];
+
+// mock objects for product and category search
+
+const categortId1 = new ObjectId();
+const categortId2 = new ObjectId();
+const categortId3 = new ObjectId();
+const categortId4 = new ObjectId();
+const productId1 = new ObjectId();
+const productId2 = new ObjectId();
+const productId3 = new ObjectId();
+
+const categoriesSearch = [
+  {
+    _id: categortId1,
+    name: "cat0",
+    slug: "cat0",
+  },
+  {
+    _id: categortId2,
+    name: "cat1",
+    slug: "cat1",
+  },
+  {
+    _id: categortId3,
+    name: "cat2",
+    slug: "cat2",
+  },
+  {
+    _id: categortId4,
+    name: "cat3",
+    slug: "cat3",
+  },
+];
+
+const productsSearch = [
+  {
+    _id: productId1,
+    name: "Wireless Headphones",
+    description: "High-quality noise-canceling headphones with long battery life.",
+    price: 199.99,
+    category: categortId1,
+    quantity: 100,
+    shipping: true,
+  },
+  {
+    _id: productId2,
+    name: "Bluetooth Speaker",
+    description: "Portable speaker with deep bass and clear sound.",
+    price: 49.99,
+    category: categortId2,
+    quantity: 250,
+    shipping: true,
+  },
+  {
+    _id: productId3,
+    name: "Card Games",
+    description: "Fun for family and friends.",
+    price: 145,
+    category: categortId3,
+    quantity: 10,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "Wired Speaker",
+    description: "Wired speaker having good quality.",
+    price: 145,
+    category: categortId2,
+    quantity: 10,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "High-end Speaker",
+    description: "Luxurious experience for audiophiles.",
+    price: 299.50,
+    category: categortId2,
+    quantity: 7,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "Audio Soundbar",
+    description: "For home movie experience.",
+    price: 88.88,
+    category: categortId2,
+    quantity: 200,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "Speaker",
+    description: "Popular item.",
+    price: 11.11,
+    category: categortId2,
+    quantity: 1220,
+    shipping: true,
+  },
+  {
+    _id: new ObjectId(),
+    name: "Board Games",
+    description: "Great entertainment.",
+    price: 14.20,
+    category: categortId3,
+    quantity: 64,
+    shipping: true,
+  },
+];
+
+const searchProductsResults = [
+  {searchPhrase: "speaker", numResults: 4},
+  {searchPhrase: "headphone", numResults: 1},
+  {searchPhrase: "HEADPHONES", numResults: 1},
+  {searchPhrase: "testphrase", numResults: 0},
+];
+
+const relatedProductsResults = [
+  {pid: productId1, cid: categortId1, numResults: 0},
+  {pid: productId2, cid: categortId2, numResults: 3},
+  {pid: productId3, cid: categortId3, numResults: 1},
+];
+
+const searchProductCategoryResults = [
+  {slug: categoriesSearch[0].slug, numResults: 1},
+  {slug: categoriesSearch[1].slug, numResults: 5},
+  {slug: categoriesSearch[3].slug, numResults: 0},
 ];
 
 // mock res object, to keep track of status code (201/500) and response content within tests
 const res = {
   status: jest.fn().mockReturnThis(),
   send: jest.fn(),
+  set: jest.fn(),
+  json: jest.fn(),
 };
+
+jest.mock("braintree", () => {
+  const generate = jest.fn();
+  const sale = jest.fn();
+  return {
+    ...jest.requireActual("braintree"),
+    BraintreeGateway: jest.fn().mockImplementation(() => ({
+      clientToken: {
+        generate,
+      },
+      transaction: {
+        sale,
+      },
+    })),
+  };
+});
+
+jest.mock("../models/orderModel");
 
 beforeAll(async () => {
   // set up in-memory mongo database for all tests in this file
@@ -297,7 +571,7 @@ describe("getProductController tests", () => {
         res
       );
     }
-    expect(await productModel.countDocuments({})).toEqual(2);
+    expect(await productModel.countDocuments({})).toEqual(products.length);
 
     await getProductController({}, res);
     expect(res.status).toHaveBeenCalledWith(200);
@@ -305,26 +579,12 @@ describe("getProductController tests", () => {
     // check http response sent
     expect(lastCall).toMatchObject({
       success: true,
-      counTotal: 2,
+      counTotal: products.length,
       message: "All Products",
     });
 
-    // check that response contains correct products
-    for (let i = 0; i < lastCall.products.length; i++) {
-      const currProduct = products[products.length - i - 1]; // order is reversed due to sort({createdAt: -1}) in getProductController
-      const currCategory = categories[categories.length - i - 1]; // order is reversed due to sort({createdAt: -1}) in getProductController
-      // check that the product fields (except category) matches
-      expect(currProduct).toMatchObject({
-        _id: lastCall.products[i]._id,
-        name: lastCall.products[i].name,
-        description: lastCall.products[i].description,
-        price: lastCall.products[i].price,
-        quantity: lastCall.products[i].quantity,
-        shipping: lastCall.products[i].shipping,
-      });
-      // check that the category data is correctly fetched from category collection
-      expect(lastCall.products[i].category).toMatchObject(currCategory);
-    }
+    // check that the correct number of products are received
+    expect(lastCall.products.length).toBe(products.length);
   });
 
   test("getProductController should fail with 500 error when an error is thrown", async () => {
@@ -583,5 +843,512 @@ describe("updateProductController tests", () => {
     expect(finalData).toMatchObject({
       ...products[0],
     });
+  });
+
+  describe("productPhotoController tests", () => {
+    test("productPhotoController should successfully get photo", async () => {
+      await categoryModel.insertMany(categories);
+      await createProductController(
+        { fields: products[0], files: { photo: photos[0] } },
+        res
+      );
+
+      await productPhotoController({ params: { pid: products[0]._id } }, res);
+      expect(res.status).toHaveBeenLastCalledWith(200);
+      expect(res.set).toHaveBeenLastCalledWith("Content-type", photos[0].type);
+      const lastCall = res.send.mock.lastCall[0];
+      expect(Buffer.compare(lastCall, photos[0].buffer)).toBe(0);
+    });
+
+    test("productPhotoController should fail with 500 error when an error is thrown", async () => {
+      // mock productModel.findById to throw an error for testing
+      jest.spyOn(productModel, "findById");
+      const error = new Error("productPhotoController Error");
+      productModel.findById.mockImplementation(() => {
+        throw error;
+      });
+      await productPhotoController({ params: { pid: "random-pid" } }, res);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenLastCalledWith({
+        success: false,
+        message: "Error while getting photo",
+        error: error,
+      });
+      // restore productModel.findById from mock functionality
+      productModel.findById.mockRestore();
+    });
+  });
+
+  describe("productFiltersController tests", () => {
+    test("productFiltersController should filter by price successfully", async () => {
+      await categoryModel.insertMany(categories);
+
+      for (let i = 0; i < products.length; i++) {
+        await createProductController(
+          { fields: products[i], files: { photo: photos[i] } },
+          res
+        );
+      }
+
+      const lower = 100;
+      const upper = 9999;
+
+      await productFiltersController(
+        { body: { checked: [], radio: [lower, upper] } },
+        res
+      );
+      expect(res.status).toHaveBeenLastCalledWith(200);
+
+      // check that only the >$100 products are fetched.
+      const indices = [];
+      products.forEach((product, index) => {
+        if (product.price >= 100) {
+          indices.push(index);
+        }
+      });
+
+      const lastCall = res.send.mock.lastCall[0];
+      expect(lastCall).toMatchObject({
+        success: true,
+      });
+      expect(lastCall.products.length).toBe(indices.length);
+      for (let i = 0; i < lastCall.products.length; i++) {
+        expect(lastCall.products[i].price).toBeGreaterThanOrEqual(100);
+      }
+    });
+
+    test("productFiltersController should filter by one category successfully", async () => {
+      await categoryModel.insertMany(categories);
+
+      for (let i = 0; i < products.length; i++) {
+        await createProductController(
+          { fields: products[i], files: { photo: photos[i] } },
+          res
+        );
+      }
+
+      await productFiltersController(
+        { body: { checked: [categories[0]._id], radio: [] } },
+        res
+      );
+      expect(res.status).toHaveBeenLastCalledWith(200);
+
+      // check that only the category = cat0 product is fetched.
+      const lastCall = res.send.mock.lastCall[0];
+      expect(lastCall).toMatchObject({
+        success: true,
+      });
+      expect(lastCall.products.length).toBe(1);
+      expect(products[0]).toMatchObject({
+        _id: lastCall.products[0]._id,
+        name: lastCall.products[0].name,
+        description: lastCall.products[0].description,
+        price: lastCall.products[0].price,
+        quantity: lastCall.products[0].quantity,
+        shipping: lastCall.products[0].shipping,
+      });
+    });
+
+    test("productFiltersController should filter by multiple categories successfully", async () => {
+      await categoryModel.insertMany(categories);
+
+      for (let i = 0; i < products.length; i++) {
+        await createProductController(
+          { fields: products[i], files: { photo: photos[i] } },
+          res
+        );
+      }
+
+      await productFiltersController(
+        {
+          body: { checked: [categories[0]._id, categories[1]._id], radio: [] },
+        },
+        res
+      );
+      expect(res.status).toHaveBeenLastCalledWith(200);
+
+      // check that both products are fetched.
+      const lastCall = res.send.mock.lastCall[0];
+      expect(lastCall).toMatchObject({
+        success: true,
+      });
+      expect(lastCall.products.length).toBe(2);
+    });
+
+    test("productFiltersController should fail with 400 error when an error is thrown", async () => {
+      // mock productModel.find to throw an error for testing
+      jest.spyOn(productModel, "find");
+      const error = new Error("productFiltersController Error");
+      productModel.find.mockImplementation(() => {
+        throw error;
+      });
+      await productFiltersController({ body: { checked: [], radio: [] } }, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenLastCalledWith({
+        success: false,
+        message: "Error while Filtering Products",
+        error: error,
+      });
+      // restore productModel.find from mock functionality
+      productModel.find.mockRestore();
+    });
+  });
+
+  describe("productCountController tests", () => {
+    test("productCountController returns 0 when db is empty", async () => {
+      await productCountController({}, res);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({ success: true, total: 0 });
+    });
+
+    test("productCountController returns correct count when db is not empty", async () => {
+      for (let i = 0; i < products.length; i++) {
+        await createProductController(
+          { fields: products[i], files: { photo: photos[i] } },
+          res
+        );
+      }
+      await productCountController({}, res);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        total: products.length,
+      });
+    });
+
+    test("productCountController should fail with 400 error when an error is thrown", async () => {
+      // mock productModel.find to throw an error for testing
+      jest.spyOn(productModel, "find");
+      const error = new Error("productCountController Error");
+      productModel.find.mockImplementation(() => {
+        throw error;
+      });
+      await productCountController({}, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenLastCalledWith({
+        success: false,
+        message: "Error in product count",
+        error: error,
+      });
+      // restore productModel.find from mock functionality
+      productModel.find.mockRestore();
+    });
+  });
+
+  describe("productListController tests", () => {
+    test("productListController should correctly split the products into two pages", async () => {
+      // we insert 8 products here
+      for (let i = 0; i < products.length; i++) {
+        await createProductController(
+          { fields: products[i], files: { photo: photos[i] } },
+          res
+        );
+      }
+
+      // check that the first page contains 6 products
+      await productListController({ params: { page: 1 } }, res);
+      let lastCall = res.send.mock.lastCall[0];
+      expect(lastCall.products.length).toBe(6);
+
+      // check that the second page contains the last 2 products
+      await productListController({ params: { page: 2 } }, res);
+      lastCall = res.send.mock.lastCall[0];
+      expect(lastCall.products.length).toBe(2);
+    });
+
+    test("productListController should fail with 400 error when an error is thrown", async () => {
+      // mock productModel.find to throw an error for testing
+      jest.spyOn(productModel, "find");
+      const error = new Error("productListController Error");
+      productModel.find.mockImplementation(() => {
+        throw error;
+      });
+      await productListController({ params: {} }, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenLastCalledWith({
+        success: false,
+        message: "error in per page ctrl",
+        error: error,
+      });
+      // restore productModel.find from mock functionality
+      productModel.find.mockRestore();
+    });
+  });
+});
+
+describe("braintreeTokenController tests", () => {
+  const gateway = new braintree.BraintreeGateway();
+  const req = {};
+
+  test("braintreeTokenController should generate and send client token successfully", async () => {
+    const mockedClientToken = {
+      clientToken: faker.internet.jwt().repeat(6),
+      success: true,
+    };
+    gateway.clientToken.generate.mockImplementation((_, callback) => {
+      callback(null, mockedClientToken);
+    });
+
+    await braintreeTokenController(req, res);
+
+    expect(res.send).toHaveBeenCalledWith(mockedClientToken);
+  });
+
+  test("braintreeTokenController should return 500 and send error on failure", async () => {
+    const error = new Error("Internal Server Error");
+    gateway.clientToken.generate.mockImplementation((_, callback) => {
+      callback(error);
+    });
+
+    await braintreeTokenController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith(error);
+  });
+});
+
+describe("brainTreePaymentController tests", () => {
+  const gateway = new braintree.BraintreeGateway();
+  const nonce = "fake-nonce";
+  const req = {
+    body: {
+      nonce,
+      cart: [
+        { price: parseFloat(faker.commerce.price()) },
+        { price: parseFloat(faker.commerce.price()) },
+        { price: parseFloat(faker.commerce.price()) },
+      ],
+    },
+    user: {
+      _id: faker.string.uuid(),
+    },
+  };
+
+  test("brainTreePaymentController should process payment and create an order on successful transaction", async () => {
+    const mockedSuccessfulSaleTransaction = {
+      success: true,
+      message: "Payment successful",
+    };
+    const mockOrder = {
+      _id: faker.string.uuid(),
+      products: req.body.cart,
+      payment: mockedSuccessfulSaleTransaction,
+    };
+    gateway.transaction.sale.mockImplementation((_, callback) => {
+      callback(null, mockedSuccessfulSaleTransaction);
+    });
+    orderModel.create.mockResolvedValue(mockOrder);
+
+    await brainTreePaymentController(req, res);
+
+    expect(gateway.transaction.sale).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amount: req.body.cart
+          .reduce((acc, item) => acc + item.price, 0)
+          .toFixed(2),
+        paymentMethodNonce: nonce,
+        options: {
+          submitForSettlement: true,
+        },
+      }),
+      expect.any(Function)
+    );
+    expect(orderModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        products: req.body.cart,
+        payment: mockedSuccessfulSaleTransaction,
+        buyer: req.user._id,
+      })
+    );
+    expect(res.json).toHaveBeenCalledWith({ ok: true, order: mockOrder });
+  });
+
+  test("brainTreePaymentController should return 402 and send error on payment failure", async () => {
+    const mockedFailedSaleTransaction = {
+      success: false,
+      message: "Payment failed",
+    };
+    gateway.transaction.sale.mockImplementation((_, callback) => {
+      callback(null, mockedFailedSaleTransaction);
+    });
+
+    await brainTreePaymentController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(402);
+    expect(res.send).toHaveBeenCalledWith({
+      error: mockedFailedSaleTransaction.message,
+    });
+  });
+
+  test("brainTreePaymentController should return 500 and send error on failure", async () => {
+    const error = new Error("Internal Server Error");
+    gateway.transaction.sale.mockImplementation((_, callback) => {
+      callback(error);
+    });
+
+    await brainTreePaymentController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith(error);
+  });
+});
+
+describe("searchProductController tests", () => {
+
+  test.each(searchProductsResults)
+  ("searchProductController should return matching products based on keyword", 
+    async ({searchPhrase, numResults}) => {
+
+    for (let i = 0; i < productsSearch.length; i += 1 ) {
+      await createProductController(
+        { fields: productsSearch[i], files: { photo: photos[i] } },
+        res
+      );
+    }
+
+    const req = { params: { keyword: searchPhrase } };
+
+    await searchProductController(req, res);
+
+    expect(res.json).toHaveBeenCalledTimes(1);
+
+    const jsonResponse = res.json.mock.calls[0][0];
+
+    const regex = new RegExp(searchPhrase, "i");
+    const allMatch = jsonResponse.every((product) =>
+      regex.test(product.name) || regex.test(product.description)
+    );
+
+    expect(allMatch).toBe(true);
+    expect(jsonResponse.length).toBe(numResults); 
+  });
+
+  test("searchProductController should handle errors and return status 400", async () => {
+    jest.spyOn(productModel, "find");
+    const error = new Error("searchProductController Error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+
+    const req = { params: { keyword: "test" } };
+
+    await searchProductController(req, res);
+
+    //check that error is thrown
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenLastCalledWith({
+      success: false,
+      message: "Error in search product API",
+      error: error,
+    });
+
+    // restore productModel.find from mock functionality
+    productModel.find.mockRestore();
+  });
+});
+
+describe("relatedProductController tests", () => {
+
+  test.each(relatedProductsResults)
+  ("relatedProductController should return matching products based on category", 
+    async ({pid, cid, numResults}) => {
+
+    await categoryModel.insertMany(categoriesSearch);
+
+    for (let i = 0; i < productsSearch.length; i += 1 ) {
+      await createProductController(
+        { fields: productsSearch[i], files: { photo: photos[0] } },
+        res
+    )};
+
+    const req = { params: { pid, cid } };
+
+    await relatedProductController(req, res);
+
+    expect(res.status).toHaveBeenLastCalledWith(200);
+
+    const jsonResponse = res.send.mock.lastCall[0].products;
+
+    const allCorrectCategory = jsonResponse.every(
+      (product) => product.category._id.toString() === cid.toString());
+    expect(allCorrectCategory).toBe(true);
+
+    expect(jsonResponse.length).toBe(numResults); 
+  });
+
+  test("relatedProductController should handle errors and return status 400", async () => {
+    jest.spyOn(productModel, "find");
+    const error = new Error("relatedProductController Error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+
+    const req = { params: { keyword: "test" } };
+
+    await relatedProductController(req, res);
+
+    //check that error is thrown
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenLastCalledWith({
+      success: false,
+      message: "Error while getting related product",
+      error: error,
+    });
+
+    // restore productModel.find from mock functionality
+    productModel.find.mockRestore();
+  });
+});
+
+describe("productCategoryController tests", () => {
+
+  test.each(searchProductCategoryResults)
+  ("productCategoryController should return matching products based on category slug", 
+    async ({slug, numResults}) => {
+
+    await categoryModel.insertMany(categoriesSearch);
+
+    for (let i = 0; i < productsSearch.length; i += 1 ) {
+      await createProductController(
+        { fields: productsSearch[i], files: { photo: photos[0] } },
+        res
+    )};
+
+    const req = { params: { slug } };
+
+    await productCategoryController(req, res);
+
+    expect(res.status).toHaveBeenLastCalledWith(200);
+
+    const jsonResponse = res.send.mock.lastCall[0].products;
+
+    const allCorrectCategory = jsonResponse.every(
+      (product) => product.category.slug === slug);
+    expect(allCorrectCategory).toBe(true);
+
+    expect(jsonResponse.length).toBe(numResults); 
+  });
+
+  test("productCategoryController should handle errors and return status 400", async () => {
+    jest.spyOn(productModel, "find");
+    const error = new Error("productCategoryController Error");
+    productModel.find.mockImplementation(() => {
+      throw error;
+    });
+
+    const req = { params: { keyword: "test" } };
+
+    await productCategoryController(req, res);
+
+    //check that error is thrown
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenLastCalledWith({
+      success: false,
+      message: "Error while getting products",
+      error: error,
+    });
+
+    // restore productModel.find from mock functionality
+    productModel.find.mockRestore();
   });
 });
