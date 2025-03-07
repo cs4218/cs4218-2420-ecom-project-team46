@@ -38,6 +38,12 @@ const Login = () => {
   const location = useLocation();
   
   // form function
+
+  // What is e in handleSubmit(e)?
+  // the parameter e represents the event object that is automatically passed to the event handler when an event (like a form submission) occurs.
+  // e is an instance of SyntheticEvent in React.
+  // It contains information about the event (like type, target element, etc.).
+  // It is automatically provided by React when the function is triggered as an event handler.
   const handleSubmit = async (e) => {
     // triggered when the user clicks lOGIN
     // prevent default refreshing, otherwise the page will be reloaded, and the React state is lost
