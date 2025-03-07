@@ -22,9 +22,11 @@ const HomePage = () => {
   //get all cat
   const getAllCategory = async () => {
     try {
-      const { data } = await axios.get("/api/v1/category/get-category");
-      if (data?.success) {
-        setCategories(data?.category);
+      const response = await axios.get("/api/v1/category/get-category");
+      if (response?.data?.success) {
+        setCategories(response.data.category);
+      } else {
+        console.log("Fetch is unsuccessful. Please try again later.");
       }
     } catch (error) {
       console.log(error);
@@ -39,8 +41,12 @@ const HomePage = () => {
   //getTOtal COunt
   const getTotal = async () => {
     try {
-      const { data } = await axios.get("/api/v1/product/product-count");
-      setTotal(data?.total);
+      const response = await axios.get("/api/v1/product/product-count");
+      if (response?.data?.success) {
+        setTotal(response.data.total);
+      } else {
+        console.log("Fetch is unsuccessful. Please try again later.");
+      }
     } catch (error) {
       console.log(error);
     }
@@ -55,9 +61,16 @@ const HomePage = () => {
   const loadMore = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get(`/api/v1/product/product-list/${page}`);
+      const response = await axios.get(`/api/v1/product/product-list/${page}`);
+      if (response?.data?.success) {
+        setProducts((prevProducts) => [
+          ...prevProducts,
+          ...response.data.products,
+        ]);
+      } else {
+        console.log("Fetch is unsuccessful. Please try again later.");
+      }
       setLoading(false);
-      setProducts([...products, ...data?.products]);
     } catch (error) {
       console.log(error);
       setLoading(false);
@@ -86,9 +99,13 @@ const HomePage = () => {
         checked,
         radio,
       });
-      setProducts(response?.data.products);
+      if (response?.data?.success) {
+        setProducts(response.data.products);
+      } else {
+        console.log("Fetch is unsuccessful. Please try again later.");
+      }
     } catch (error) {
-      console.error(error);
+      console.log(error);
     }
   };
 
