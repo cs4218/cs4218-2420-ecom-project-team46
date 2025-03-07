@@ -18,8 +18,7 @@ describe("Spinner", () => {
     mockedUseNavigate.mockClear();
   });
 
-  afterEach(() => {
-    jest.runOnlyPendingTimers();
+  afterAll(() => {
     jest.useRealTimers();
   });
 
