@@ -1,57 +1,35 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import React from "react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter } from "react-router-dom";
 import Footer from "./Footer";
 
-jest.mock("../context/auth", () => ({
-  useAuth: jest.fn(() => [null, jest.fn()]),
-}));
-
-jest.mock("../context/cart", () => ({
-  useCart: jest.fn(() => [null, jest.fn()]),
-}));
-
-jest.mock("../context/search", () => ({
-  useSearch: jest.fn(() => [{ keyword: "" }, jest.fn()]),
-}));
-
 describe("Footer", () => {
-  const renderFooterComponent = () => {
+  beforeEach(() => {
     render(
-      <MemoryRouter initialEntries={["/"]}>
-        <Routes>
-          <Route path="/" element={<Footer />} />
-        </Routes>
+      <MemoryRouter>
+        <Footer />
       </MemoryRouter>
     );
-  };
+  });
 
-  it("should render Footer with heading matching 'all rights reserved'", () => {
-    renderFooterComponent();
-
+  it("should display heading matching 'all rights reserved'", () => {
     expect(screen.getByRole("heading")).toHaveTextContent(
       /all rights reserved/i
     );
   });
 
-  it("should render About link", () => {
-    renderFooterComponent();
-
+  it("should display About link", () => {
     const link = screen.getByRole("link", { name: "About" });
     expect(link).toHaveAttribute("href", "/about");
   });
 
-  it("should render Contact link", () => {
-    renderFooterComponent();
-
+  it("should display Contact link", () => {
     const link = screen.getByRole("link", { name: "Contact" });
     expect(link).toHaveAttribute("href", "/contact");
   });
 
-  it("should render Privacy Policy link", () => {
-    renderFooterComponent();
-
+  it("should display Privacy Policy link", () => {
     const link = screen.getByRole("link", { name: "Privacy Policy" });
     expect(link).toHaveAttribute("href", "/policy");
   });
