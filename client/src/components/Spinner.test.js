@@ -1,9 +1,9 @@
+import { faker } from "@faker-js/faker";
 import "@testing-library/jest-dom";
 import { act, render, screen } from "@testing-library/react";
 import React from "react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter } from "react-router-dom";
 import Spinner from "./Spinner";
-import { faker } from "@faker-js/faker";
 
 const mockedUseNavigate = jest.fn();
 
@@ -18,26 +18,21 @@ describe("Spinner", () => {
     mockedUseNavigate.mockClear();
   });
 
-  afterEach(() => {
-    jest.runOnlyPendingTimers();
+  afterAll(() => {
     jest.useRealTimers();
   });
 
   const renderSpinnerComponent = (path) => {
     render(
       <MemoryRouter initialEntries={["/dashboard"]}>
-        <Routes>
-          <Route
-            path="/dashboard"
-            element={path ? <Spinner path={path} /> : <Spinner />}
-          />
-        </Routes>
+        {path ? <Spinner path={path} /> : <Spinner />}
       </MemoryRouter>
     );
   };
 
   it("should display spinner component and loading status text", () => {
     renderSpinnerComponent();
+
     expect(screen.getByText(/3/)).toBeInTheDocument();
     expect(screen.getByRole("status")).toBeInTheDocument();
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
@@ -52,22 +47,25 @@ describe("Spinner", () => {
     act(() => {
       jest.advanceTimersByTime(1000);
     });
+
     expect(screen.getByText(/2/)).toBeInTheDocument();
 
     act(() => {
       jest.advanceTimersByTime(1000);
     });
+
     expect(screen.getByText(/1/i)).toBeInTheDocument();
 
     act(() => {
       jest.advanceTimersByTime(1000);
     });
+
     expect(mockedUseNavigate).toHaveBeenCalledWith(`/${path}`, {
       state: { from: "/dashboard" },
     });
   });
 
-  it("should count down and navigate to default path after 3 seconds if no path prop is provided", () => {
+  it("should count down and navigate to default /login path after 3 seconds if no path prop is provided", () => {
     renderSpinnerComponent();
 
     expect(screen.getByText(/3/)).toBeInTheDocument();
@@ -75,16 +73,19 @@ describe("Spinner", () => {
     act(() => {
       jest.advanceTimersByTime(1000);
     });
+
     expect(screen.getByText(/2/)).toBeInTheDocument();
 
     act(() => {
       jest.advanceTimersByTime(1000);
     });
+
     expect(screen.getByText(/1/i)).toBeInTheDocument();
 
     act(() => {
       jest.advanceTimersByTime(1000);
     });
+
     expect(mockedUseNavigate).toHaveBeenCalledWith("/login", {
       state: { from: "/dashboard" },
     });
