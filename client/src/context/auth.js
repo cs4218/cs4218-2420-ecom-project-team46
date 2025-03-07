@@ -22,16 +22,20 @@ const AuthProvider = ({ children }) => {
 
     // remove the "eslint-disable-next-line" by using functional updates to avoid stale closures.
     useEffect(() => {
-       const data = localStorage.getItem("auth");
-       if (data) {
-        const parseData = JSON.parse(data);
-        setAuth(prevAuth => ({
-            ...prevAuth,
-            user: parseData.user,
-            token: parseData.token,
-        }));
-       }
-    }, []);
+        const data = localStorage.getItem("auth");
+        if (data) {
+            try {
+                const parseData = JSON.parse(data);
+                setAuth(prevAuth => ({
+                    ...prevAuth,
+                    user: parseData.user,
+                    token: parseData.token,
+                }));
+            } catch (error) {
+                console.error("Error parsing auth from localStorage:", error);
+            }
+        }
+     }, []);
 
     return (
         <AuthContext.Provider value={[auth, setAuth]}>

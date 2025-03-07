@@ -29,6 +29,7 @@ describe("AuthContext", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     delete axios.defaults.headers.common["Authorization"];
+    window.localStorage.getItem.mockReturnValue(null);
   });
 
   afterEach(() => {
@@ -85,4 +86,44 @@ describe("AuthContext", () => {
       expect(axios.defaults.headers.common.hasOwnProperty("Authorization")).toBe(false);
     });
   });
+
+  it("should remain in default state if localStorage returns null", async () => {
+    window.localStorage.getItem.mockReturnValue(null);
+    
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+    
+    await waitFor(() => {
+      expect(result.current[0]).toEqual({ user: null, token: "" });
+    });
+  });
+
+  it("should handle invalid JSON in localStorage gracefully", async () => {
+    window.localStorage.getItem.mockReturnValue("invalid json");
+    
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+
+    // auth still kept as default
+    await waitFor(() => {
+      expect(result.current[0]).toEqual({ user: null, token: "" });
+    });
+  });
+
+  it("should update auth state with repeated calls to setAuth", async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+  
+    act(() => {
+      result.current[1]({ user: { name: "First" }, token: "firstToken" });
+    });
+    expect(result.current[0]).toEqual({ user: { name: "First" }, token: "firstToken" });
+  
+    act(() => {
+      result.current[1]({ user: { name: "Second" }, token: "secondToken" });
+    });
+    expect(result.current[0]).toEqual({ user: { name: "Second" }, token: "secondToken" });
+  
+    await waitFor(() => {
+      expect(axios.defaults.headers.common["Authorization"]).toBe("secondToken");
+    });
+  });
+
 });
