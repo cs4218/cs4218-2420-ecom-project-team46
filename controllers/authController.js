@@ -7,30 +7,31 @@ import JWT from "jsonwebtoken";
 export const registerController = async (req, res) => {
   try {
     const { name, email, password, phone, address, answer } = req.body;
-    //validations
+    // validations
+    // add 400 status code to indicate Bad Request
     if (!name) {
-      return res.send({ error: "Name is Required" });
+      return res.status(400).send({ message: "Name is Required" }); // align to message, like the rest
     }
     if (!email) {
-      return res.send({ message: "Email is Required" });
+      return res.status(400).send({ message: "Email is Required" });
     }
     if (!password) {
-      return res.send({ message: "Password is Required" });
+      return res.status(400).send({ message: "Password is Required" });
     }
     if (!phone) {
-      return res.send({ message: "Phone no is Required" });
+      return res.status(400).send({ message: "Phone no is Required" });
     }
     if (!address) {
-      return res.send({ message: "Address is Required" });
+      return res.status(400).send({ message: "Address is Required" });
     }
     if (!answer) {
-      return res.send({ message: "Answer is Required" });
+      return res.status(400).send({ message: "Answer is Required" });
     }
     //check user
     const exisitingUser = await userModel.findOne({ email });
     //exisiting user
     if (exisitingUser) {
-      return res.status(200).send({
+      return res.status(409).send({ // status code changed from 200 to 409 to indicate Conflict
         success: false,
         message: "Already Register please login",
       });
@@ -56,7 +57,7 @@ export const registerController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Errro in Registeration",
+      message: "Error in Registration", // typo corrected
       error,
     });
   }
@@ -66,28 +67,33 @@ export const registerController = async (req, res) => {
 export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
-    //validation
+    // validation
+    // even though client side shows email and password fileds are both required, these checks can be bypassed in the user's browser => still crucial for server-side to validate
     if (!email || !password) {
-      return res.status(404).send({
+      // changed code from 404 to 400 as Bad Request is more appropriate
+      return res.status(400).send({
         success: false,
         message: "Invalid email or password",
       });
     }
     //check user
 
-    // shouldn't be so explicit about whether the email or password is incorrect?
+    // shouldn't be so explicit about whether the email or password is incorrect
+    // 401 Unauthorized is more appropriate than 200
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(200).send({
+      return res.status(401).send({
         success: false,
-        message: "Email is not registerd",
+        message: "Invalid email or password",
+        // message: "Email is not registerd",
       });
     }
     const match = await comparePassword(password, user.password);
     if (!match) {
-      return res.status(200).send({
+      return res.status(401).send({
         success: false,
-        message: "Invalid Password",
+        message: "Invalid email or password",
+        // message: "Invalid Password",
       });
     }
     //token
@@ -117,25 +123,25 @@ export const loginController = async (req, res) => {
   }
 };
 
-//forgotPasswordController
-
+// forgotPasswordController
 export const forgotPasswordController = async (req, res) => {
   try {
     const { email, answer, newPassword } = req.body;
+    // if any of these is empty, should just return
     if (!email) {
-      res.status(400).send({ message: "Emai is required" });
+      return res.status(400).send({ message: "Email is required" });
     }
     if (!answer) {
-      res.status(400).send({ message: "answer is required" });
+      return res.status(400).send({ message: "answer is required" });
     }
     if (!newPassword) {
-      res.status(400).send({ message: "New Password is required" });
+      return res.status(400).send({ message: "New Password is required" });
     }
     //check
     const user = await userModel.findOne({ email, answer });
     //validation
     if (!user) {
-      return res.status(404).send({
+      return res.status(401).send({
         success: false,
         message: "Wrong Email Or Answer",
       });
@@ -218,6 +224,7 @@ export const getOrdersController = async (req, res) => {
     });
   }
 };
+
 //orders
 export const getAllOrdersController = async (_req, res) => {
   try {
