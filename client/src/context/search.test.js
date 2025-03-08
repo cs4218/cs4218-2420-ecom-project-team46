@@ -9,10 +9,6 @@ afterAll(() => {
   cleanup();
 });
 
-afterEach(() => {
-  cleanup();
-});
-
 describe("SearchContext", () => {
   beforeEach(() => {
     jest.clearAllMocks();
