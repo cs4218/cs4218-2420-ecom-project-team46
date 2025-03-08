@@ -54,14 +54,25 @@ describe("AuthContext", () => {
     });
   });
 
-  it("should update auth state with setAuth", () => {
+  it("should remain in default state if localStorage returns null", async () => {
+    window.localStorage.getItem.mockReturnValue(null);
+    
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+    
+    await waitFor(() => {
+      expect(result.current[0]).toEqual({ user: null, token: "" });
+    });
+  });
+
+  it("should handle invalid JSON in localStorage gracefully", async () => {
+    window.localStorage.getItem.mockReturnValue("invalid json");
+    
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
 
-    act(() => {
-      result.current[1]({ user: { name: "Bob" }, token: "abc456" });
+    // auth still kept as default
+    await waitFor(() => {
+      expect(result.current[0]).toEqual({ user: null, token: "" });
     });
-
-    expect(result.current[0]).toEqual({ user: { name: "Bob" }, token: "abc456" });
   });
 
   it("should update axios Authorization header when token changes", async () => {
@@ -87,27 +98,16 @@ describe("AuthContext", () => {
     });
   });
 
-  it("should remain in default state if localStorage returns null", async () => {
-    window.localStorage.getItem.mockReturnValue(null);
-    
-    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
-    
-    await waitFor(() => {
-      expect(result.current[0]).toEqual({ user: null, token: "" });
-    });
-  });
-
-  it("should handle invalid JSON in localStorage gracefully", async () => {
-    window.localStorage.getItem.mockReturnValue("invalid json");
-    
+  it("should update auth state with setAuth", () => {
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
 
-    // auth still kept as default
-    await waitFor(() => {
-      expect(result.current[0]).toEqual({ user: null, token: "" });
+    act(() => {
+      result.current[1]({ user: { name: "Bob" }, token: "abc456" });
     });
-  });
 
+    expect(result.current[0]).toEqual({ user: { name: "Bob" }, token: "abc456" });
+  });
+  
   it("should update auth state with repeated calls to setAuth", async () => {
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
   
