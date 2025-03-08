@@ -23,7 +23,7 @@ import {
   updateProductController,
   searchProductController,
   relatedProductController,
-  productCategoryController
+  productCategoryController,
 } from "./productController";
 
 // in-memory mongo server for testing
@@ -230,7 +230,8 @@ const productsSearch = [
   {
     _id: productId1,
     name: "Wireless Headphones",
-    description: "High-quality noise-canceling headphones with long battery life.",
+    description:
+      "High-quality noise-canceling headphones with long battery life.",
     price: 199.99,
     category: categortId1,
     quantity: 100,
@@ -267,7 +268,7 @@ const productsSearch = [
     _id: new ObjectId(),
     name: "High-end Speaker",
     description: "Luxurious experience for audiophiles.",
-    price: 299.50,
+    price: 299.5,
     category: categortId2,
     quantity: 7,
     shipping: true,
@@ -294,7 +295,7 @@ const productsSearch = [
     _id: new ObjectId(),
     name: "Board Games",
     description: "Great entertainment.",
-    price: 14.20,
+    price: 14.2,
     category: categortId3,
     quantity: 64,
     shipping: true,
@@ -302,22 +303,22 @@ const productsSearch = [
 ];
 
 const searchProductsResults = [
-  {searchPhrase: "speaker", numResults: 4},
-  {searchPhrase: "headphone", numResults: 1},
-  {searchPhrase: "HEADPHONES", numResults: 1},
-  {searchPhrase: "testphrase", numResults: 0},
+  { searchPhrase: "speaker", numResults: 4 },
+  { searchPhrase: "headphone", numResults: 1 },
+  { searchPhrase: "HEADPHONES", numResults: 1 },
+  { searchPhrase: "testphrase", numResults: 0 },
 ];
 
 const relatedProductsResults = [
-  {pid: productId1, cid: categortId1, numResults: 0},
-  {pid: productId2, cid: categortId2, numResults: 3},
-  {pid: productId3, cid: categortId3, numResults: 1},
+  { pid: productId1, cid: categortId1, numResults: 0 },
+  { pid: productId2, cid: categortId2, numResults: 3 },
+  { pid: productId3, cid: categortId3, numResults: 1 },
 ];
 
 const searchProductCategoryResults = [
-  {slug: categoriesSearch[0].slug, numResults: 1},
-  {slug: categoriesSearch[1].slug, numResults: 5},
-  {slug: categoriesSearch[3].slug, numResults: 0},
+  { slug: categoriesSearch[0].slug, numResults: 1 },
+  { slug: categoriesSearch[1].slug, numResults: 5 },
+  { slug: categoriesSearch[3].slug, numResults: 0 },
 ];
 
 // mock res object, to keep track of status code (201/500) and response content within tests
@@ -380,7 +381,7 @@ describe("createProductController tests", () => {
   const productData = products[0];
   const photoData = photos[0];
 
-  test("createProductController should correctly create and save product with photo", async () => {
+  it("should correctly create and save product with photo", async () => {
     const req = { fields: productData, files: { photo: photoData } };
 
     await createProductController(req, res);
@@ -424,7 +425,7 @@ describe("createProductController tests", () => {
     });
   });
 
-  test("createProductController should correctly create and save product without photo", async () => {
+  it("should correctly create and save product without photo", async () => {
     const req = { fields: productData, files: {} };
 
     await createProductController(req, res);
@@ -456,14 +457,14 @@ describe("createProductController tests", () => {
     });
   });
 
-  test.each([
+  it.each([
     { field: "name", errorMessage: "Name is Required" },
     { field: "description", errorMessage: "Description is Required" },
     { field: "price", errorMessage: "Price is Required" },
     { field: "category", errorMessage: "Category is Required" },
     { field: "quantity", errorMessage: "Quantity is Required" },
   ])(
-    "createProductController should fail with 500 error when name/description/price/category/quantity field is missing",
+    "should fail with 500 error when name/description/price/category/quantity field is missing",
     async ({ field, errorMessage }) => {
       // delete the field from productDataCopy to simulate it being missing
       const productDataCopy = { ...productData };
@@ -480,7 +481,7 @@ describe("createProductController tests", () => {
     }
   );
 
-  test.each([
+  it.each([
     { field: "name", value: "", errorMessage: "Name is Required" },
     {
       field: "description",
@@ -491,7 +492,7 @@ describe("createProductController tests", () => {
     { field: "category", value: "", errorMessage: "Category is Required" },
     { field: "quantity", value: 0, errorMessage: "Quantity is Required" },
   ])(
-    "createProductController should fail with 500 error when %s field is an empty string/0 for numerical values)",
+    "should fail with 500 error when %s field is an empty string/0 for numerical values)",
     async ({ field, value, errorMessage }) => {
       // set the field to simulate it being empty string/0
       const productDataCopy = { ...productData };
@@ -507,14 +508,14 @@ describe("createProductController tests", () => {
     }
   );
 
-  test.each([
+  it.each([
     { size: 100000, statusCode: 201 },
     { size: 999999, statusCode: 201 },
     { size: 1000000, statusCode: 201 },
     { size: 1000001, statusCode: 500 },
     { size: 2000000, statusCode: 500 },
   ])(
-    "createProductController should only allow photos <1MB to pass with status 201, 500 otherwise",
+    "should only allow photos <1MB to pass with status 201, 500 otherwise",
     async ({ size, statusCode }) => {
       const req = {
         fields: productData,
@@ -524,7 +525,7 @@ describe("createProductController tests", () => {
       expect(res.status).toHaveBeenCalledWith(statusCode);
     }
   );
-  test("createProductController should fail with 500 error when an error is thrown", async () => {
+  it("should fail with 500 error when an error is thrown", async () => {
     const req = {
       fields: productData,
       files: {
@@ -547,7 +548,7 @@ describe("createProductController tests", () => {
 });
 
 describe("getProductController tests", () => {
-  test("getProductController should succeed with no products when mongo is empty", async () => {
+  it("should succeed with no products when mongo is empty", async () => {
     // check that the collection is empty
     expect(await productModel.countDocuments({})).toEqual(0);
     await getProductController({}, res);
@@ -559,7 +560,7 @@ describe("getProductController tests", () => {
     });
   });
 
-  test("getProductController should succeed with products when mongo has documents", async () => {
+  it("should succeed with products when mongo has documents", async () => {
     // insert categories into the category collection
     await categoryModel.insertMany(categories);
 
@@ -587,7 +588,7 @@ describe("getProductController tests", () => {
     expect(lastCall.products.length).toBe(products.length);
   });
 
-  test("getProductController should fail with 500 error when an error is thrown", async () => {
+  it("should fail with 500 error when an error is thrown", async () => {
     // mock productModel.find to throw an error for testing
     jest.spyOn(productModel, "find");
     const error = new Error("getProductController Error");
@@ -611,7 +612,7 @@ describe("getProductController tests", () => {
 });
 
 describe("getSingleProductController tests", () => {
-  test("getSingleProductController should successfully find product based on slug", async () => {
+  it("should successfully find product based on slug", async () => {
     await categoryModel.insertMany(categories);
 
     // insert single product
@@ -643,7 +644,7 @@ describe("getSingleProductController tests", () => {
     expect(lastCall.product.category).toMatchObject(categories[0]);
   });
 
-  test("getSingleProductController should fail with 500 error when an error is thrown", async () => {
+  it("should fail with 500 error when an error is thrown", async () => {
     // mock productModel.findOne to throw an error for testing
     jest.spyOn(productModel, "findOne");
     const error = new Error("getSingleProductController Error");
@@ -663,7 +664,7 @@ describe("getSingleProductController tests", () => {
 });
 
 describe("deleteProductController tests", () => {
-  test("deleteProductController should successfully delete product", async () => {
+  it("should successfully delete product", async () => {
     // insert two products
     await createProductController(
       { fields: products[0], files: { photo: photos[0] } },
@@ -688,7 +689,7 @@ describe("deleteProductController tests", () => {
     });
   });
 
-  test("deleteProductController should 404 and not delete any products if incorrect slug given", async () => {
+  it("should 404 and not delete any products if incorrect slug given", async () => {
     // insert a product (products[0])
     await createProductController(
       { fields: products[0], files: { photo: photos[0] } },
@@ -708,7 +709,7 @@ describe("deleteProductController tests", () => {
     });
   });
 
-  test("deleteProductController should fail with 500 error when an error is thrown", async () => {
+  it("should fail with 500 error when an error is thrown", async () => {
     // mock productModel.findByIdAndDelete to throw an error for testing
     jest.spyOn(productModel, "findByIdAndDelete");
     const error = new Error("deleteProductController Error");
@@ -728,7 +729,7 @@ describe("deleteProductController tests", () => {
 });
 
 describe("updateProductController tests", () => {
-  test.each([
+  it.each([
     {
       req: { fields: { name: "newName" } },
       fieldToUpdate: "name",
@@ -759,58 +760,54 @@ describe("updateProductController tests", () => {
       fieldToUpdate: "shipping",
       value: false,
     },
-  ])(
-    "updateProductController should successfully update fields (excl. photo)",
-    async ({ req }) => {
-      await createProductController(
-        { fields: products[0], files: { photo: photos[0] } },
-        res
-      );
+  ])("should successfully update fields (excl. photo)", async ({ req }) => {
+    await createProductController(
+      { fields: products[0], files: { photo: photos[0] } },
+      res
+    );
 
-      // update only the field as parametrized
-      req.params = { pid: products[0]._id };
-      await updateProductController(req, res);
+    // update only the field as parametrized
+    req.params = { pid: products[0]._id };
+    await updateProductController(req, res);
 
-      const savedProduct = await productModel.findOne({
-        _id: products[0]._id,
-      });
+    const savedProduct = await productModel.findOne({
+      _id: products[0]._id,
+    });
 
-      // check that the relevant fields are updated
-      expect(savedProduct[req.fieldToUpdate]).toEqual(req.value);
+    // check that the relevant fields are updated
+    expect(savedProduct[req.fieldToUpdate]).toEqual(req.value);
 
-      expect(res.status).toHaveBeenLastCalledWith(200);
+    expect(res.status).toHaveBeenLastCalledWith(200);
 
-      // expect correct http response
-      const lastCall = res.send.mock.lastCall[0];
-      expect(lastCall).toMatchObject({
-        success: true,
-        message: "Product updated successfully",
-      });
-      expect(savedProduct).toMatchObject({
-        name: req.fieldToUpdate === "name" ? req.value : lastCall.product.name,
-        description:
-          req.fieldToUpdate === "description"
-            ? req.value
-            : lastCall.product.description,
-        price:
-          req.fieldToUpdate === "price" ? req.value : lastCall.product.price,
-        category:
-          req.fieldToUpdate === "category"
-            ? req.value
-            : lastCall.product.category,
-        quantity:
-          req.fieldToUpdate === "quantity"
-            ? req.value
-            : lastCall.product.quantity,
-        shipping:
-          req.fieldToUpdate === "shipping"
-            ? req.value
-            : lastCall.product.shipping,
-      });
-    }
-  );
+    // expect correct http response
+    const lastCall = res.send.mock.lastCall[0];
+    expect(lastCall).toMatchObject({
+      success: true,
+      message: "Product updated successfully",
+    });
+    expect(savedProduct).toMatchObject({
+      name: req.fieldToUpdate === "name" ? req.value : lastCall.product.name,
+      description:
+        req.fieldToUpdate === "description"
+          ? req.value
+          : lastCall.product.description,
+      price: req.fieldToUpdate === "price" ? req.value : lastCall.product.price,
+      category:
+        req.fieldToUpdate === "category"
+          ? req.value
+          : lastCall.product.category,
+      quantity:
+        req.fieldToUpdate === "quantity"
+          ? req.value
+          : lastCall.product.quantity,
+      shipping:
+        req.fieldToUpdate === "shipping"
+          ? req.value
+          : lastCall.product.shipping,
+    });
+  });
 
-  test("updateProductController should successfully update photo", async () => {
+  it("should successfully update photo", async () => {
     // create product with photos[0]
     await createProductController(
       { fields: products[0], files: { photo: photos[0] } },
@@ -846,7 +843,7 @@ describe("updateProductController tests", () => {
   });
 
   describe("productPhotoController tests", () => {
-    test("productPhotoController should successfully get photo", async () => {
+    it("should successfully get photo", async () => {
       await categoryModel.insertMany(categories);
       await createProductController(
         { fields: products[0], files: { photo: photos[0] } },
@@ -860,7 +857,7 @@ describe("updateProductController tests", () => {
       expect(Buffer.compare(lastCall, photos[0].buffer)).toBe(0);
     });
 
-    test("productPhotoController should fail with 500 error when an error is thrown", async () => {
+    it("should fail with 500 error when an error is thrown", async () => {
       // mock productModel.findById to throw an error for testing
       jest.spyOn(productModel, "findById");
       const error = new Error("productPhotoController Error");
@@ -880,7 +877,7 @@ describe("updateProductController tests", () => {
   });
 
   describe("productFiltersController tests", () => {
-    test("productFiltersController should filter by price successfully", async () => {
+    it("should filter by price successfully", async () => {
       await categoryModel.insertMany(categories);
 
       for (let i = 0; i < products.length; i++) {
@@ -917,7 +914,7 @@ describe("updateProductController tests", () => {
       }
     });
 
-    test("productFiltersController should filter by one category successfully", async () => {
+    it("should filter by one category successfully", async () => {
       await categoryModel.insertMany(categories);
 
       for (let i = 0; i < products.length; i++) {
@@ -949,7 +946,7 @@ describe("updateProductController tests", () => {
       });
     });
 
-    test("productFiltersController should filter by multiple categories successfully", async () => {
+    it("should filter by multiple categories successfully", async () => {
       await categoryModel.insertMany(categories);
 
       for (let i = 0; i < products.length; i++) {
@@ -975,7 +972,7 @@ describe("updateProductController tests", () => {
       expect(lastCall.products.length).toBe(2);
     });
 
-    test("productFiltersController should fail with 400 error when an error is thrown", async () => {
+    it("should fail with 400 error when an error is thrown", async () => {
       // mock productModel.find to throw an error for testing
       jest.spyOn(productModel, "find");
       const error = new Error("productFiltersController Error");
@@ -995,13 +992,13 @@ describe("updateProductController tests", () => {
   });
 
   describe("productCountController tests", () => {
-    test("productCountController returns 0 when db is empty", async () => {
+    it("should return 0 when db is empty", async () => {
       await productCountController({}, res);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.send).toHaveBeenCalledWith({ success: true, total: 0 });
     });
 
-    test("productCountController returns correct count when db is not empty", async () => {
+    it("should return correct count when db is not empty", async () => {
       for (let i = 0; i < products.length; i++) {
         await createProductController(
           { fields: products[i], files: { photo: photos[i] } },
@@ -1016,7 +1013,7 @@ describe("updateProductController tests", () => {
       });
     });
 
-    test("productCountController should fail with 400 error when an error is thrown", async () => {
+    it("should fail with 400 error when an error is thrown", async () => {
       // mock productModel.find to throw an error for testing
       jest.spyOn(productModel, "find");
       const error = new Error("productCountController Error");
@@ -1036,7 +1033,7 @@ describe("updateProductController tests", () => {
   });
 
   describe("productListController tests", () => {
-    test("productListController should correctly split the products into two pages", async () => {
+    it("should correctly split the products into two pages", async () => {
       // we insert 8 products here
       for (let i = 0; i < products.length; i++) {
         await createProductController(
@@ -1056,7 +1053,7 @@ describe("updateProductController tests", () => {
       expect(lastCall.products.length).toBe(2);
     });
 
-    test("productListController should fail with 400 error when an error is thrown", async () => {
+    it("should fail with 400 error when an error is thrown", async () => {
       // mock productModel.find to throw an error for testing
       jest.spyOn(productModel, "find");
       const error = new Error("productListController Error");
@@ -1080,7 +1077,7 @@ describe("braintreeTokenController tests", () => {
   const gateway = new braintree.BraintreeGateway();
   const req = {};
 
-  test("braintreeTokenController should generate and send client token successfully", async () => {
+  it("should generate and send client token successfully", async () => {
     const mockedClientToken = {
       clientToken: faker.internet.jwt().repeat(6),
       success: true,
@@ -1094,7 +1091,7 @@ describe("braintreeTokenController tests", () => {
     expect(res.send).toHaveBeenCalledWith(mockedClientToken);
   });
 
-  test("braintreeTokenController should return 500 and send error on failure", async () => {
+  it("should return 500 and send error on failure", async () => {
     const error = new Error("Internal Server Error");
     gateway.clientToken.generate.mockImplementation((_, callback) => {
       callback(error);
@@ -1124,7 +1121,7 @@ describe("brainTreePaymentController tests", () => {
     },
   };
 
-  test("brainTreePaymentController should process payment and create an order on successful transaction", async () => {
+  it("should process payment and create an order on successful transaction", async () => {
     const mockedSuccessfulSaleTransaction = {
       success: true,
       message: "Payment successful",
@@ -1163,7 +1160,7 @@ describe("brainTreePaymentController tests", () => {
     expect(res.json).toHaveBeenCalledWith({ ok: true, order: mockOrder });
   });
 
-  test("brainTreePaymentController should return 402 and send error on payment failure", async () => {
+  it("should return 402 and send error on payment failure", async () => {
     const mockedFailedSaleTransaction = {
       success: false,
       message: "Payment failed",
@@ -1180,7 +1177,7 @@ describe("brainTreePaymentController tests", () => {
     });
   });
 
-  test("brainTreePaymentController should return 500 and send error on failure", async () => {
+  it("should return 500 and send error on failure", async () => {
     const error = new Error("Internal Server Error");
     gateway.transaction.sale.mockImplementation((_, callback) => {
       callback(error);
@@ -1194,36 +1191,35 @@ describe("brainTreePaymentController tests", () => {
 });
 
 describe("searchProductController tests", () => {
+  it.each(searchProductsResults)(
+    "should return matching products based on keyword",
+    async ({ searchPhrase, numResults }) => {
+      for (let i = 0; i < productsSearch.length; i += 1) {
+        await createProductController(
+          { fields: productsSearch[i], files: { photo: photos[i] } },
+          res
+        );
+      }
 
-  test.each(searchProductsResults)
-  ("searchProductController should return matching products based on keyword", 
-    async ({searchPhrase, numResults}) => {
+      const req = { params: { keyword: searchPhrase } };
 
-    for (let i = 0; i < productsSearch.length; i += 1 ) {
-      await createProductController(
-        { fields: productsSearch[i], files: { photo: photos[i] } },
-        res
+      await searchProductController(req, res);
+
+      expect(res.json).toHaveBeenCalledTimes(1);
+
+      const jsonResponse = res.json.mock.calls[0][0];
+
+      const regex = new RegExp(searchPhrase, "i");
+      const allMatch = jsonResponse.every(
+        (product) => regex.test(product.name) || regex.test(product.description)
       );
+
+      expect(allMatch).toBe(true);
+      expect(jsonResponse.length).toBe(numResults);
     }
+  );
 
-    const req = { params: { keyword: searchPhrase } };
-
-    await searchProductController(req, res);
-
-    expect(res.json).toHaveBeenCalledTimes(1);
-
-    const jsonResponse = res.json.mock.calls[0][0];
-
-    const regex = new RegExp(searchPhrase, "i");
-    const allMatch = jsonResponse.every((product) =>
-      regex.test(product.name) || regex.test(product.description)
-    );
-
-    expect(allMatch).toBe(true);
-    expect(jsonResponse.length).toBe(numResults); 
-  });
-
-  test("searchProductController should handle errors and return status 400", async () => {
+  it("should handle errors and return status 400", async () => {
     jest.spyOn(productModel, "find");
     const error = new Error("searchProductController Error");
     productModel.find.mockImplementation(() => {
@@ -1248,35 +1244,36 @@ describe("searchProductController tests", () => {
 });
 
 describe("relatedProductController tests", () => {
+  it.each(relatedProductsResults)(
+    "should return matching products based on category",
+    async ({ pid, cid, numResults }) => {
+      await categoryModel.insertMany(categoriesSearch);
 
-  test.each(relatedProductsResults)
-  ("relatedProductController should return matching products based on category", 
-    async ({pid, cid, numResults}) => {
+      for (let i = 0; i < productsSearch.length; i += 1) {
+        await createProductController(
+          { fields: productsSearch[i], files: { photo: photos[0] } },
+          res
+        );
+      }
 
-    await categoryModel.insertMany(categoriesSearch);
+      const req = { params: { pid, cid } };
 
-    for (let i = 0; i < productsSearch.length; i += 1 ) {
-      await createProductController(
-        { fields: productsSearch[i], files: { photo: photos[0] } },
-        res
-    )};
+      await relatedProductController(req, res);
 
-    const req = { params: { pid, cid } };
+      expect(res.status).toHaveBeenLastCalledWith(200);
 
-    await relatedProductController(req, res);
+      const jsonResponse = res.send.mock.lastCall[0].products;
 
-    expect(res.status).toHaveBeenLastCalledWith(200);
+      const allCorrectCategory = jsonResponse.every(
+        (product) => product.category._id.toString() === cid.toString()
+      );
+      expect(allCorrectCategory).toBe(true);
 
-    const jsonResponse = res.send.mock.lastCall[0].products;
+      expect(jsonResponse.length).toBe(numResults);
+    }
+  );
 
-    const allCorrectCategory = jsonResponse.every(
-      (product) => product.category._id.toString() === cid.toString());
-    expect(allCorrectCategory).toBe(true);
-
-    expect(jsonResponse.length).toBe(numResults); 
-  });
-
-  test("relatedProductController should handle errors and return status 400", async () => {
+  it("should handle errors and return status 400", async () => {
     jest.spyOn(productModel, "find");
     const error = new Error("relatedProductController Error");
     productModel.find.mockImplementation(() => {
@@ -1301,35 +1298,36 @@ describe("relatedProductController tests", () => {
 });
 
 describe("productCategoryController tests", () => {
+  it.each(searchProductCategoryResults)(
+    "should return matching products based on category slug",
+    async ({ slug, numResults }) => {
+      await categoryModel.insertMany(categoriesSearch);
 
-  test.each(searchProductCategoryResults)
-  ("productCategoryController should return matching products based on category slug", 
-    async ({slug, numResults}) => {
+      for (let i = 0; i < productsSearch.length; i += 1) {
+        await createProductController(
+          { fields: productsSearch[i], files: { photo: photos[0] } },
+          res
+        );
+      }
 
-    await categoryModel.insertMany(categoriesSearch);
+      const req = { params: { slug } };
 
-    for (let i = 0; i < productsSearch.length; i += 1 ) {
-      await createProductController(
-        { fields: productsSearch[i], files: { photo: photos[0] } },
-        res
-    )};
+      await productCategoryController(req, res);
 
-    const req = { params: { slug } };
+      expect(res.status).toHaveBeenLastCalledWith(200);
 
-    await productCategoryController(req, res);
+      const jsonResponse = res.send.mock.lastCall[0].products;
 
-    expect(res.status).toHaveBeenLastCalledWith(200);
+      const allCorrectCategory = jsonResponse.every(
+        (product) => product.category.slug === slug
+      );
+      expect(allCorrectCategory).toBe(true);
 
-    const jsonResponse = res.send.mock.lastCall[0].products;
+      expect(jsonResponse.length).toBe(numResults);
+    }
+  );
 
-    const allCorrectCategory = jsonResponse.every(
-      (product) => product.category.slug === slug);
-    expect(allCorrectCategory).toBe(true);
-
-    expect(jsonResponse.length).toBe(numResults); 
-  });
-
-  test("productCategoryController should handle errors and return status 400", async () => {
+  it("should handle errors and return status 400", async () => {
     jest.spyOn(productModel, "find");
     const error = new Error("productCategoryController Error");
     productModel.find.mockImplementation(() => {

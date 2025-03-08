@@ -127,7 +127,93 @@ describe("HomePage component", () => {
     });
   });
 
-  it("should display all category options and filter based on the selected category", async () => {
+  it("should display all category options", async () => {
+    renderHomePage();
+
+    await waitFor(() => {
+      expect(screen.getByText(/filter by category/i)).toBeInTheDocument();
+      expect(screen.getByText(categories[0].name)).toBeInTheDocument();
+      expect(screen.getByText(categories[1].name)).toBeInTheDocument();
+    });
+  });
+
+  it("should log an error when fetch category fails", async () => {
+    const consoleSpy = jest.spyOn(console, "log");
+    axios.get.mockResolvedValueOnce({
+      data: {
+        success: false,
+      },
+    });
+    renderHomePage();
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Fetch is unsuccessful. Please try again later."
+      );
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it("should log an error when fetch category errors", async () => {
+    const consoleSpy = jest.spyOn(console, "log");
+    const error = new Error();
+    axios.get.mockRejectedValueOnce(error);
+    renderHomePage();
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(error);
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it("should log an error when fetch total fails", async () => {
+    const consoleSpy = jest.spyOn(console, "log");
+    axios.get
+      .mockResolvedValueOnce({
+        data: {
+          success: true,
+          category: categories,
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          success: false,
+        },
+      });
+    renderHomePage();
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Fetch is unsuccessful. Please try again later."
+      );
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it("should log an error when fetch total errors", async () => {
+    const consoleSpy = jest.spyOn(console, "log");
+    const error = new Error();
+    axios.get
+      .mockResolvedValueOnce({
+        data: {
+          success: true,
+          category: categories,
+        },
+      })
+      .mockRejectedValueOnce(error);
+    renderHomePage();
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(error);
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it("should toggle filters based on the selected category options", async () => {
     renderHomePage();
 
     await waitFor(() => {
@@ -139,6 +225,7 @@ describe("HomePage component", () => {
     axios.post.mockResolvedValueOnce({
       data: {
         products: [products[0], products[2]],
+        success: true,
       },
     });
 
@@ -158,7 +245,62 @@ describe("HomePage component", () => {
     axios.post.mockResolvedValueOnce({
       data: {
         products,
+        success: true,
       },
+    });
+
+    act(() => {
+      userEvent.click(screen.getByLabelText(categories[0].name));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(categories[0].name).checked).toBe(false);
+      expect(screen.getByLabelText(categories[1].name).checked).toBe(false);
+      expect(screen.getByText(products[0].name)).toBeInTheDocument();
+      expect(screen.getByText(products[1].name)).toBeInTheDocument();
+      expect(screen.getByText(products[2].name)).toBeInTheDocument();
+      expect(screen.getByText(products[3].name)).toBeInTheDocument();
+    });
+  });
+
+  it("should uncheck all filters and display all products when the reset filters button is clicked", async () => {
+    renderHomePage();
+
+    await waitFor(() => {
+      expect(screen.getByText(/filter by category/i)).toBeInTheDocument();
+      expect(screen.getByText(categories[0].name)).toBeInTheDocument();
+      expect(screen.getByText(categories[1].name)).toBeInTheDocument();
+    });
+
+    axios.post.mockResolvedValueOnce({
+      data: {
+        products: [products[1], products[3]],
+        success: true,
+      },
+    });
+
+    act(() => {
+      userEvent.click(screen.getByLabelText(categories[1].name));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(categories[0].name).checked).toBe(false);
+      expect(screen.getByLabelText(categories[1].name).checked).toBe(true);
+      expect(screen.getByText(products[1].name)).toBeInTheDocument();
+      expect(screen.getByText(products[3].name)).toBeInTheDocument();
+      expect(screen.queryByText(products[0].name)).not.toBeInTheDocument();
+      expect(screen.queryByText(products[2].name)).not.toBeInTheDocument();
+    });
+
+    axios.post.mockResolvedValueOnce({
+      data: {
+        products,
+        success: true,
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/reset filters/i)).toBeInTheDocument();
     });
 
     act(() => {
@@ -186,6 +328,7 @@ describe("HomePage component", () => {
     axios.post.mockResolvedValueOnce({
       data: {
         products: [products[0], products[1]],
+        success: true,
       },
     });
 
@@ -205,6 +348,7 @@ describe("HomePage component", () => {
     axios.post.mockResolvedValueOnce({
       data: {
         products: [products[2], products[3]],
+        success: true,
       },
     });
 
@@ -224,6 +368,7 @@ describe("HomePage component", () => {
     axios.post.mockResolvedValueOnce({
       data: {
         products,
+        success: true,
       },
     });
 
@@ -240,6 +385,45 @@ describe("HomePage component", () => {
     });
   });
 
+  it("should log error if product filter fails", async () => {
+    const consoleSpy = jest.spyOn(console, "log");
+    axios.post.mockResolvedValueOnce({
+      data: {
+        success: false,
+      },
+    });
+    renderHomePage();
+
+    act(() => {
+      userEvent.click(screen.getByLabelText("$50 - $99"));
+    });
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Fetch is unsuccessful. Please try again later."
+      );
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it("should log error if product filter errors", async () => {
+    const consoleSpy = jest.spyOn(console, "log");
+    const error = new Error();
+    axios.post.mockRejectedValueOnce(error);
+    renderHomePage();
+
+    act(() => {
+      userEvent.click(screen.getByLabelText("$50 - $99"));
+    });
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(error);
+    });
+
+    consoleSpy.mockRestore();
+  });
+
   it("should display a header with text matching 'products'", async () => {
     renderHomePage();
 
@@ -252,6 +436,7 @@ describe("HomePage component", () => {
     axios.post.mockResolvedValueOnce({
       data: {
         products: [products[0]],
+        success: true,
       },
     });
     renderHomePage();
@@ -276,6 +461,7 @@ describe("HomePage component", () => {
     axios.post.mockResolvedValueOnce({
       data: {
         products: [products[0]],
+        success: true,
       },
     });
     renderHomePage();
@@ -303,6 +489,7 @@ describe("HomePage component", () => {
     axios.post.mockResolvedValueOnce({
       data: {
         products: [products[0]],
+        success: true,
       },
     });
     const mockedSetCart = jest.fn();
@@ -331,6 +518,7 @@ describe("HomePage component", () => {
     axios.post.mockResolvedValueOnce({
       data: {
         products: products.slice(0, -1),
+        success: true,
       },
     });
     renderHomePage();
@@ -357,10 +545,72 @@ describe("HomePage component", () => {
     });
   });
 
+  it("should log an error when load more fails", async () => {
+    const consoleSpy = jest.spyOn(console, "log");
+    axios.post.mockResolvedValueOnce({
+      data: {
+        products: products.slice(0, -1),
+        success: true,
+      },
+    });
+    renderHomePage();
+
+    await waitFor(() => {
+      expect(screen.getByText(/load more/i)).toBeInTheDocument();
+    });
+
+    axios.get.mockResolvedValueOnce({
+      data: {
+        success: false,
+      },
+    });
+
+    act(() => {
+      userEvent.click(screen.getByText(/load more/i));
+    });
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Fetch is unsuccessful. Please try again later."
+      );
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it("should log an error when load more errors", async () => {
+    const consoleSpy = jest.spyOn(console, "log");
+    axios.post.mockResolvedValueOnce({
+      data: {
+        products: products.slice(0, -1),
+        success: true,
+      },
+    });
+    renderHomePage();
+
+    await waitFor(() => {
+      expect(screen.getByText(/load more/i)).toBeInTheDocument();
+    });
+
+    const error = new Error();
+    axios.get.mockRejectedValueOnce(error);
+
+    act(() => {
+      userEvent.click(screen.getByText(/load more/i));
+    });
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(error);
+    });
+
+    consoleSpy.mockRestore();
+  });
+
   it("should hide the load more button when all products are displayed", async () => {
     axios.post.mockResolvedValueOnce({
       data: {
         products,
+        success: true,
       },
     });
     renderHomePage();

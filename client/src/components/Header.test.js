@@ -1,12 +1,12 @@
 import { faker } from "@faker-js/faker";
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import axios from "axios";
 import React from "react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import toast from "react-hot-toast";
+import { MemoryRouter } from "react-router-dom";
 import { useAuth } from "../context/auth";
-import { useSearch } from "../context/search";
+import { useCart } from "../context/cart";
 import useCategory from "../hooks/useCategory";
 import Header from "./Header";
 
@@ -17,99 +17,68 @@ jest.mock("../context/auth", () => ({
 }));
 
 jest.mock("../context/cart", () => ({
-  useCart: jest.fn(() => [null, jest.fn()]),
-}));
-
-jest.mock("../context/search", () => ({
-  useSearch: jest.fn(() => [{ keyword: "" }, jest.fn()]),
+  useCart: jest.fn(() => [[]]),
 }));
 
 jest.mock("../hooks/useCategory", () => ({
   __esModule: true,
-  default: jest.fn(() => [[], jest.fn()]),
+  default: jest.fn(() => []),
+}));
+
+jest.mock("./Form/SearchInput", () => () => <></>);
+
+jest.mock("react-hot-toast", () => ({
+  success: jest.fn(),
 }));
 
 describe("Header", () => {
   const renderHeaderComponent = () => {
     render(
-      <MemoryRouter initialEntries={["/"]}>
-        <Routes>
-          <Route path="/" element={<Header />} />
-        </Routes>
+      <MemoryRouter>
+        <Header />
       </MemoryRouter>
     );
   };
 
-  it("should render e-commerce name", () => {
+  it("should display e-commerce name", () => {
     renderHeaderComponent();
 
     const link = screen.getByRole("link", { name: /virtual vault/i });
     expect(link).toHaveAttribute("href", "/");
   });
 
-  it("should render empty search input and search button", () => {
-    renderHeaderComponent();
-
-    const searchInput = screen.getByPlaceholderText(/search/i);
-    expect(searchInput).toBeInTheDocument();
-    expect(searchInput.value).toBe("");
-    const searchButton = screen.getByText(/search/i);
-    expect(searchButton).toBeInTheDocument();
-  });
-
-  it("should search based on user input", async () => {
-    const keyword = faker.commerce.productName();
-    useSearch.mockImplementation(() => [{ keyword }, jest.fn()]);
-    renderHeaderComponent();
-
-    const searchInput = screen.getByRole("searchbox", { name: "Search" });
-    expect(searchInput).toBeInTheDocument();
-    userEvent.type(searchInput, keyword);
-    expect(screen.getByPlaceholderText(/search/i).value).toMatch(
-      new RegExp(keyword)
-    );
-    const searchButton = screen.getByRole("button", { name: "Search" });
-    expect(searchButton).toBeInTheDocument();
-    userEvent.click(searchButton);
-    expect(axios.get).toHaveBeenCalledWith(`/api/v1/product/search/${keyword}`);
-  });
-
-  it("should render home button", () => {
+  it("should display home link", () => {
     renderHeaderComponent();
 
     const link = screen.getByRole("link", { name: /home/i });
     expect(link).toHaveAttribute("href", "/");
   });
 
-  it("should render categories button", () => {
+  it("should display the categories link", () => {
     renderHeaderComponent();
 
     const link = screen.getByRole("link", { name: /(?<!\bAll\s)categories/i });
     expect(link).toHaveAttribute("href", "/categories");
   });
 
-  it("should render all categories button", () => {
+  it("should display all categories link", () => {
     renderHeaderComponent();
 
     const link = screen.getByRole("link", { name: /all categories/i });
     expect(link).toHaveAttribute("href", "/categories");
   });
 
-  it("should render each respective category link", () => {
-    const generateMockCategories = () => {
-      const categories = [];
-      const min = 0;
-      const max = 10;
-      const count = Math.floor(Math.random() * (max - min + 1) + min);
-      for (let i = 0; i < count; i += 1) {
+  it("should display the correct category link for each category", () => {
+    const generateMockCategories = (min = 0, max = 10) => {
+      const categoriesCount = Math.floor(Math.random() * (max - min + 1) + min);
+      return Array.from({ length: categoriesCount }, () => {
         const name = faker.commerce.productName();
-        categories.push({
-          id: faker.string.uuid(),
-          name: faker.commerce.productName(),
+        return {
+          _id: faker.string.uuid(),
+          name,
           slug: name.toLowerCase().replace(/\s+/g, "-"),
-        });
-      }
-      return categories;
+        };
+      });
     };
     const mockCategories = generateMockCategories();
     useCategory.mockReturnValue(mockCategories);
@@ -121,7 +90,7 @@ describe("Header", () => {
     });
   });
 
-  it("should render register and login links when not signed in", () => {
+  it("should display register and login links when the user is not signed in", () => {
     renderHeaderComponent();
 
     const registerLink = screen.getByRole("link", { name: /register/i });
@@ -130,18 +99,18 @@ describe("Header", () => {
     expect(loginLink).toHaveAttribute("href", "/login");
   });
 
-  it("should render username, dashboard and logout links when admin is signed in", () => {
-    const mockAdminCredentials = {
+  it("should display username, dashboard and logout links when admin is signed in", () => {
+    const mockedAdminCredentials = {
       user: {
         name: faker.person.fullName(),
         role: 1,
       },
     };
-    useAuth.mockImplementation(() => [mockAdminCredentials, jest.fn()]);
+    useAuth.mockImplementation(() => [mockedAdminCredentials, jest.fn()]);
     renderHeaderComponent();
 
     expect(
-      screen.getByText(new RegExp(mockAdminCredentials.user.name))
+      screen.getByText(new RegExp(mockedAdminCredentials.user.name))
     ).toBeInTheDocument();
     const dashboardLink = screen.getByRole("link", { name: /dashboard/i });
     expect(dashboardLink).toHaveAttribute("href", "/dashboard/admin");
@@ -149,18 +118,18 @@ describe("Header", () => {
     expect(logoutLink).toHaveAttribute("href", "/login");
   });
 
-  it("should render username, dashboard and logout links when user is signed in", () => {
-    const mockUserCredentials = {
+  it("should display username, dashboard and logout links when user is signed in", () => {
+    const mockedUserCredentials = {
       user: {
         name: faker.person.fullName(),
         role: 0,
       },
     };
-    useAuth.mockImplementation(() => [mockUserCredentials, jest.fn()]);
+    useAuth.mockImplementation(() => [mockedUserCredentials, jest.fn()]);
     renderHeaderComponent();
 
     expect(
-      screen.getByText(new RegExp(mockUserCredentials.user.name))
+      screen.getByText(new RegExp(mockedUserCredentials.user.name))
     ).toBeInTheDocument();
     const dashboardLink = screen.getByRole("link", { name: /dashboard/i });
     expect(dashboardLink).toHaveAttribute("href", "/dashboard/user");
@@ -168,10 +137,85 @@ describe("Header", () => {
     expect(logoutLink).toHaveAttribute("href", "/login");
   });
 
-  it("should render Cart button", () => {
+  it("should log out the admin user when the logout link is clicked", async () => {
+    const mockedAdminCredentials = {
+      user: {
+        name: faker.person.fullName(),
+        role: 1,
+      },
+    };
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        removeItem: jest.fn(),
+      },
+      writable: true,
+    });
+    const mockedSetAuth = jest.fn();
+    useAuth.mockImplementation(() => [mockedAdminCredentials, mockedSetAuth]);
+    renderHeaderComponent();
+
+    act(() => {
+      userEvent.click(screen.getByRole("link", { name: /logout/i }));
+    });
+
+    expect(mockedSetAuth).toHaveBeenCalledWith({
+      ...mockedAdminCredentials,
+      user: null,
+      token: "",
+    });
+    expect(localStorage.removeItem).toHaveBeenCalledWith("auth");
+    expect(toast.success).toHaveBeenCalledWith("Logout Successfully");
+  });
+
+  it("should log out the user when the logout link is clicked", async () => {
+    const mockedUserCredentials = {
+      user: {
+        name: faker.person.fullName(),
+        role: 0,
+      },
+    };
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        removeItem: jest.fn(),
+      },
+      writable: true,
+    });
+    const mockedSetAuth = jest.fn();
+    useAuth.mockImplementation(() => [mockedUserCredentials, mockedSetAuth]);
+    renderHeaderComponent();
+
+    act(() => {
+      userEvent.click(screen.getByRole("link", { name: /logout/i }));
+    });
+
+    expect(mockedSetAuth).toHaveBeenCalledWith({
+      ...mockedUserCredentials,
+      user: null,
+      token: "",
+    });
+    expect(localStorage.removeItem).toHaveBeenCalledWith("auth");
+    expect(toast.success).toHaveBeenCalledWith("Logout Successfully");
+  });
+
+  it("should display cart link", () => {
     renderHeaderComponent();
 
     const link = screen.getByRole("link", { name: /cart/i });
     expect(link).toHaveAttribute("href", "/cart");
+  });
+
+  it("should display 0 in cart badge when cart is empty", () => {
+    renderHeaderComponent();
+
+    expect(screen.getByTitle(0)).toBeInTheDocument();
+  });
+
+  it("should display cart items count in cart badge when cart is not empty", () => {
+    const cartLength = Math.floor(Math.random() * 100) + 1;
+    const cart = Array(cartLength);
+    useCart.mockImplementation(() => [cart]);
+    renderHeaderComponent();
+
+    expect(screen.getByTitle(cartLength.toString())).toBeInTheDocument();
   });
 });
