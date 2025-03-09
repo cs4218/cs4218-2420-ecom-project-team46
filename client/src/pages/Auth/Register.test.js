@@ -153,7 +153,7 @@ describe("Register Component", () => {
   });
 
   // Successful form submission leads to success toast and navigation to login
-  it("should register the user successfully", async () => {
+  it("should register the user and redirect successfully", async () => {
     axios.post.mockResolvedValueOnce({ 
       data: { 
         success: true 

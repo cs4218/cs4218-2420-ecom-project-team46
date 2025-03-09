@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import "../../styles/AuthStyles.css";
 
-// define Register component. no props; all states are handled locally.
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

@@ -4,7 +4,7 @@ import axios from "axios";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import "@testing-library/jest-dom/extend-expect";
 import toast from "react-hot-toast";
-import Login from "./Login";  // import Login component. by default will look for .js file, since this is a .js file
+import Login from "./Login";
 
 // Mocking axios.post to prevent real POST requests
 jest.mock("axios");
@@ -86,14 +86,8 @@ describe("Login Component", () => {
     cleanup();
   });
 
-  // test whether the login form is correctly rendered
-  // what's inside "double quote" is the description
-  // () => {} is the real logic
   it("renders login form", async () => {
-    // render(): ask Jest to create a virtual DOM
     render(
-      // MemoryRouter: a special router that is used for testing, to allow Jest to mock the routing
-      // set the URL as /login, to correctly load Login.js
       <MemoryRouter initialEntries={["/login"]}>
         <Routes>
           {/* if visiting /login, render <Login /> */}
@@ -149,7 +143,7 @@ describe("Login Component", () => {
     );
   });
 
-  it("should login the user successfully", async () => {
+  it("should login the user and redirect successfully", async () => {
     // mock the response from API
     axios.post.mockResolvedValueOnce({
       data: {
@@ -177,7 +171,6 @@ describe("Login Component", () => {
     });
     fireEvent.click(screen.getByText("LOGIN"));
 
-    // axios.post() is async, so we use await waitFor() for it to finish
     // check whether axios.post() has been called with the critical data (email and password), at the same time it won't break if the API call's structture changes in non-critical ways
     // also, endpoint might change ==> leave it as expect.anything()
     await waitFor(() => 
@@ -289,21 +282,5 @@ describe("Login Component", () => {
       expect(toast.error).toHaveBeenCalledWith("Something went wrong")
     );
   });
-
-  // // during testing, when clicking on "Forgot Password", it results in 404
-  // it("should navigate to forgot-password page when clicking 'Forgot Password' button", () => {
-  //   render(
-  //     <MemoryRouter initialEntries={["/login"]}>
-  //       <Routes>
-  //         <Route path="/login" element={<Login />} />
-  //         <Route path="/forgot-password" element={<div>Forgot Password Page</div>} />
-  //       </Routes>
-  //     </MemoryRouter>
-  //   );
-  
-  //   fireEvent.click(screen.getByText("Forgot Password"));
-  
-  //   expect(screen.getByText("Forgot Password Page")).toBeInTheDocument();
-  // });
   
 });
