@@ -4,6 +4,7 @@ import {
   loginController,
   forgotPasswordController,
   testController,
+  getAllUsersController
 } from "../controllers/authController.js";
 import userModel from "../models/userModel.js";
 import { hashPassword, comparePassword } from "../helpers/authHelper.js";
@@ -685,4 +686,67 @@ describe("orderStatusController", () => {
 
     consoleSpy.mockRestore();
   });
+
+describe("getAllUsersController", () => {
+  let req, res;
+
+  beforeEach(() => {
+    req = {};
+    res = {
+      json: jest.fn(),
+      send: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    };
+    jest.clearAllMocks();
+  });
+
+  it("should return 200 and send all users when fetching is successful", async () => {
+    const users = [
+      {
+        _id: "1", 
+        name: "user1",
+        email: "user1@testing.com",
+        phone: "123423453456",
+        address: "bukitpanjang"
+      },
+      {
+        _id: "2", 
+        name: "user2",
+        email: "user2@testing.com",
+        phone: "12342345324e5",
+        address: "bukitbatok"
+      },
+    ];
+    userModel.find.mockResolvedValue(users);
+
+    await getAllUsersController(req, res);
+
+    expect(userModel.find).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      users,
+    });
+  });
+
+  it("should return 500 and send error message when an exception is caught", async () => {
+    const error = new Error("Database Error");
+    userModel.find.mockRejectedValue(error);
+
+    const consoleSpy = jest.spyOn(console, "error");
+
+    await getAllUsersController(req, res);
+
+    expect(userModel.find).toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith(error);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error in fetching users",
+      error: error.message,
+    });
+
+    consoleSpy.mockRestore();
+  });
+});
 });
