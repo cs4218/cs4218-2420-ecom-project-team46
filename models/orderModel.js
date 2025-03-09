@@ -12,6 +12,7 @@ const orderSchema = new mongoose.Schema(
     buyer: {
       type: mongoose.ObjectId,
       ref: "users",
+      required: true
     },
     status: {
       type: String,
@@ -26,6 +27,12 @@ const orderSchema = new mongoose.Schema(
     },
   },
   { timestamps: true }
+);
+
+orderSchema.path("products").validate(
+  function (value) {
+    return value.length > 0;
+  }
 );
 
 export default mongoose.model("Order", orderSchema);
