@@ -207,6 +207,25 @@ export const updateProfileController = async (req, res) => {
   }
 };
 
+// get all users
+export const getAllUsersController = async (req, res) => {
+  try {
+    const users = await userModel.find();
+    
+    res.status(200).send({ 
+      success: true, 
+      users 
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in fetching users",
+      error: error.message,
+    });
+  }
+};
+
 //orders
 export const getOrdersController = async (req, res) => {
   try {
