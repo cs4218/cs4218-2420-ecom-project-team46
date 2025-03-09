@@ -162,7 +162,7 @@ const CartPage = () => {
                         })
                       }
                     >
-                      Plase Login to checkout
+                      Please Login to checkout
                     </button>
                   )}
                 </div>
@@ -181,7 +181,7 @@ const CartPage = () => {
                       }}
                       onInstance={(instance) => setInstance(instance)}
                     />
-
+0
                     <button
                       className="btn btn-primary"
                       onClick={handlePayment}
