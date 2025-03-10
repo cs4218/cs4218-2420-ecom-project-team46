@@ -1,0 +1,33 @@
+{
+  "silent": true,
+  "transform": {
+    "^.+\\.jsx?$": "babel-jest"
+  },
+  "transformIgnorePatterns": ["/node_modules/"],
+  "projects": [
+    {
+      "displayName": "default",
+      "roots": ["<rootDir>"],
+      "testMatch": [
+        "<rootDir>/config/*.(test|integration).js",
+        "<rootDir>/controllers/*.(test|integration).js",
+        "<rootDir>/helpers/*.(test|integration).js",
+        "<rootDir>/middlewares/*.(test|integration).js",
+        "<rootDir>/models/*.(test|integration).js",
+        "<rootDir>/routes/*.(test|integration).js",
+        "<rootDir>/integration-tests/*.(test|integration).js",
+        "<rootDir>/**/*.(test|integration).js"
+      ],
+      "testPathIgnorePatterns": ["/client/"]
+    },
+    {
+      "displayName": "client",
+      "testEnvironment": "jsdom",
+      "roots": ["<rootDir>/client/src"],
+      "testMatch": ["**/?(*.)+(spec|test|integration).[jt]s?(x)"],
+      "moduleNameMapper": {
+        "\\.(css|scss)$": "identity-obj-proxy"
+      }
+    }
+  ]
+}
