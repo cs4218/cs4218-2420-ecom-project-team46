@@ -12,7 +12,8 @@
     "sonarqube": "sonarqube-scanner",
     "test:backend": "jest --config jest.backend.config.json --runInBand",
     "test:frontend": "jest --config jest.frontend.config.json",
-    "test": "concurrently \"npm run test:backend\" \"npm run test:frontend\""
+    "test": "concurrently \"npm run test:backend\" \"npm run test:frontend\"",
+    "test:coverage": "jest --config jest.coverage.config.json --runInBand --collect-coverage"
   },
   "keywords": [],
   "author": "RP",

@@ -223,3 +223,88 @@ CI run links for Milestone 1 submission:
         </tr>
     </tbody>
 </table>
+
+# Milestone 2
+
+## Running Sonarqube Coverage
+
+### Requires
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Docker Compose](https://docs.docker.com/compose/)
+
+## Step 1: Installing Docker Desktop
+- Go to the official [docker website](https://www.docker.com/products/docker-desktop/) to download Docker Desktop software.
+- Check that you have the software installed and running by the command `docker --version` on your CLI.
+- You should see something like this on your CLI.
+```
+docker --version
+>> Docker version 27.5.1, build 9f9e405
+```
+
+## Step 2: Installing Docker Compose
+- Check that you have docker compose installed by running the command `docker compose version` on your CLI.
+- You should see something like this on your CLI.
+```
+docker compose version
+>> Docker Compose version v2.32.4-desktop.1
+```
+- Else, please follow the instructions [here](https://docs.docker.com/compose/install/) to install docker compose (preferably v2.x, if possible) on your computer.
+
+## Step 3: Start Sonarqube and underlying DB
+- Start Sonarqube and its underlying database.
+- Default username: `admin` 
+- Default password: `admin`
+- You will be prompted to change password upon first login.
+
+To start up the sonarqube and postgres DB:
+```
+docker compose -f 'docker-compose.sonarqube.yml' up -d --build 'sonar_db' 'sonarqube' 
+```
+
+To check if you have successfully start Sonarqube by opening this link in the browser:
+```
+http://localhost:9001
+```
+
+## Step 3: Create Sonarqube token
+- Go to `My Account` > `Security` to generate a `Global Analysis Token`
+- Copy the token value and update the token in the following files:
+    - sonar-project.properties
+    - docker-compose.sonarqube.yml
+
+## Step 4: Run Jest Coverage
+- Run jest coverage using npm.
+- The output will be stored in the `coverage` folder by default.
+
+To run Jest coverage:
+```
+npm run test:coverage
+```
+
+## Step 5: Run Sonarqube Coverage Report
+- Run the Sonarqube coverage report by starting the `sonar-scanner` service in docker compose.
+
+To run Sonarqube coverage report:
+```
+docker compose -f 'cs4218-2420-ecom-project-team46/docker-compose.sonarqube.yml' up -d --build 'sonar-scanner'
+```
+
+To view logs:
+```
+docker logs sonar-scanner -f 
+```
+
+## Step 6: Access the Sonarqube Coverage Report
+- View the report using Sonarqube UI.
+
+To access coverage report by opening this link in the browser:
+```
+http://localhost:9001/component_measures?metric=coverage&view=list&id=econ
+```
+
+## Step 7: Shutdown Docker Compose Services
+
+To stop docker compose services:
+```
+docker compose -f 'docker-compose.sonarqube.yml' down
+```
