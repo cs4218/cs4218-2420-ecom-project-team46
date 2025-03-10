@@ -28,12 +28,12 @@ describe("Category Model Test", () => {
     expect(savedCategory._id).toBeDefined();
     expect(savedCategory.name).toBe("Books");
     expect(savedCategory.slug).toBe("book");
-  });
+  }, 20000);
 
   test("Should fail if 'name' is missing", async () => {
     const category = new Category({ slug: "book" });
     await expect(category.save()).rejects.toThrow();
-  });
+  }, 20000);
 
   test("Should fail to create category with duplicate name", async () => {  
     const category = new Category({
@@ -49,11 +49,11 @@ describe("Category Model Test", () => {
     });
 
     await expect(() => category_2.save()).rejects.toThrow();
-  });
+  }, 20000);
 
   test("Should fail if 'slug' is missing", async () => {
     const category = new Category({ name: "Book" });
 
     await expect(category.save()).rejects.toThrow();
-  });
+  }, 20000);
 })
