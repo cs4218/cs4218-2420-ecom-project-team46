@@ -124,9 +124,7 @@ CI run links for Milestone 1 submission:
                     <li> ./client/src/pages/admin/Users.js </li>
                     <li> ./server.js </li>
                     <li> ./client/src/components/AdminMenu.js </li>
-                    <li> ./routes/authRoute.js </li>
                     <li> ./models/categoryModel.js </li>
-                    <li> ./routes/productRoutes.js </li>
                     <li> ./client/src/pages/admin/AdminDashboard.js </li>
                     <li> ./models/userModel.js </li>
                     <li> ./models/orderModel.js </li>
@@ -134,13 +132,13 @@ CI run links for Milestone 1 submission:
                     <li> ./client/src/components/UserMenu.js </li>
                     <li> ./models/productModel.js </li>
                     <li> ./client/src/pages/user/Dashboard.js </li>
-                    <li> ./routes/categoryRoutes.js </li>
                     <li> ./client/src/components/Routes/AdminRoute.js </li>
                     <li> ./client/src/pages/user/Profile.js </li>
                     <li> ./client/src/pages/CartPage.js </li>
                     <li> ./controllers/authController.js </li>
                     <ul> 
                         <li>updateProfileController</li>
+                        <li>getAllUsersController</li>
                     </ul>
                     <li> ./config/db.js </li>
                 </ul>
