@@ -8,5 +8,6 @@
   "moduleNameMapper": {
     "\\.(css|scss)$": "identity-obj-proxy"
   },
-  "transformIgnorePatterns": ["/node_modules/"]
+  "transformIgnorePatterns": ["/node_modules/"],
+  "silent": true
 }

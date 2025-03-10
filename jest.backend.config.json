@@ -8,7 +8,6 @@
     "<rootDir>/models/*.test.js",
     "<rootDir>/routes/*.test.js",
     "<rootDir>/*.test.js"
-
   ],
   "transform": {
     "^.+\\.jsx?$": "babel-jest"
@@ -17,5 +16,6 @@
     "\\.(css|scss)$": "identity-obj-proxy"
   },
   "transformIgnorePatterns": ["/node_modules/"],
-  "testPathIgnorePatterns": ["/client/"]
+  "testPathIgnorePatterns": ["/client/"],
+  "silent": true
 }
