@@ -278,7 +278,7 @@ http://localhost:9001
 
 To run Jest coverage:
 ```
-npm run test:coverage
+npm run coverage
 ```
 
 ## Step 5: Run Sonarqube Coverage Report

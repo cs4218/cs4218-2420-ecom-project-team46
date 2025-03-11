@@ -1,0 +1,15 @@
+{
+  "roots": ["<rootDir>"],
+  "testMatch": [
+    "<rootDir>/integration-tests/*.integration.test.js"
+  ],
+  "transform": {
+    "^.+\\.jsx?$": "babel-jest"
+  },
+  "moduleNameMapper": {
+    "\\.(css|scss)$": "identity-obj-proxy"
+  },
+  "transformIgnorePatterns": ["/node_modules/"],
+  "testPathIgnorePatterns": ["/client/"],
+  "silent": true
+}

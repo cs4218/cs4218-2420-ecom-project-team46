@@ -15,8 +15,8 @@
         "<rootDir>/middlewares/*.test.js",
         "<rootDir>/models/*.test.js",
         "<rootDir>/routes/*.test.js",
-        "<rootDir>/integration-tests/*.test.js",
-        "<rootDir>/**/*.test.js"
+        "<rootDir>/**/*.test.js",
+        "<rootDir>/integration-tests/*.integration.test.js"
       ],
       "testPathIgnorePatterns": ["/client/"]
     },
@@ -24,7 +24,10 @@
       "displayName": "client",
       "testEnvironment": "jsdom",
       "roots": ["<rootDir>/client/src"],
-      "testMatch": ["**/?(*.)+(spec|test).[jt]s?(x)"],
+      "testMatch": [
+        "**/?(*.)+(spec|test).[jt]s?(x)",
+        "**/integration-tests/*.integration.test.[jt]s?(x)"
+      ],
       "moduleNameMapper": {
         "\\.(css|scss)$": "identity-obj-proxy"
       }
