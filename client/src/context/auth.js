@@ -10,15 +10,8 @@ const AuthProvider = ({ children }) => {
         token: "",
     });
 
-    // Problem: If auth.token is empty, axios might send an invalid Authorization header.
-    // axios.defaults.headers.common["Authorization"] = auth?.token;
-    useEffect(() => {
-        if (auth?.token) {
-            axios.defaults.headers.common["Authorization"] = auth.token;
-        } else {
-            delete axios.defaults.headers.common["Authorization"];
-        }
-    }, [auth]);
+    //default axios
+    axios.defaults.headers.common["Authorization"] = auth?.token;
 
     // remove the "eslint-disable-next-line" by using functional updates to avoid stale closures.
     useEffect(() => {
