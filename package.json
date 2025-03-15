@@ -16,7 +16,9 @@
     "integration:backend": "jest --config jest.integration.backend.config.json --runInBand",
     "integration:frontend": "jest --config jest.integration.frontend.config.json",
     "integration": "concurrently \"npm run integration:backend\" \"npm run integration:frontend\"",
-    "coverage": "jest --config jest.coverage.config.json --runInBand --collect-coverage"
+    "coverage": "jest --config jest.coverage.config.json --runInBand --collect-coverage",
+    "db:reset": "node ./reset-mongodb/reset-mongodb.js",
+    "playwright": "npx playwright test --workers=1"
   },
   "keywords": [],
   "author": "RP",
