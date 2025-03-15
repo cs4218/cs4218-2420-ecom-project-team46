@@ -38,7 +38,6 @@
     },
     {
       "displayName": "client",
-      "collectCoverage": false,
       "testEnvironment": "jsdom",
       "roots": ["<rootDir>/client/src"],
       "testMatch": [
