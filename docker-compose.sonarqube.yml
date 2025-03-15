@@ -43,6 +43,10 @@ services:
     platform: linux/amd64
     depends_on:
       - sonarqube
+    entrypoint: >
+      /bin/sh -c "until curl -s $$SONAR_HOST_URL/api/system/status | grep -q 'UP'; do echo 'Waiting for SonarQube...'; sleep 5; done;
+      echo 'SonarQube is up! Running sonar-scanner';
+      sonar-scanner"
 
 volumes:
   sonarqube_conf:
