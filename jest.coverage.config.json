@@ -1,5 +1,21 @@
 {
   "silent": true,
+  "collectCoverage": true,
+  "collectCoverageFrom": [
+    "<rootDir>/config/*.js",
+    "<rootDir>/controllers/*.js",
+    "<rootDir>/helpers/*.js",
+    "<rootDir>/middlewares/*.js",
+    "<rootDir>/models/*.js",
+    "<rootDir>/routes/*.js",
+    "<rootDir>/*.js",
+    "<rootDir>/client/src/**/*.js?(x)",
+    "!**/node_modules/**",
+    "!**/*.test.js?(x)",
+    "!<rootDir>/client/src/_site/**",
+    "!<rootDir>/client/src/**/setupTests.js",
+    "!<rootDir>/client/src/**/reportWebVitals.js"
+  ],
   "transform": {
     "^.+\\.jsx?$": "babel-jest"
   },
@@ -15,18 +31,19 @@
         "<rootDir>/middlewares/*.test.js",
         "<rootDir>/models/*.test.js",
         "<rootDir>/routes/*.test.js",
-        "<rootDir>/**/*.test.js",
+        "<rootDir>/*.test.js",
         "<rootDir>/integration-tests/*.integration.test.js"
       ],
       "testPathIgnorePatterns": ["/client/"]
     },
     {
       "displayName": "client",
+      "collectCoverage": false,
       "testEnvironment": "jsdom",
       "roots": ["<rootDir>/client/src"],
       "testMatch": [
-        "**/?(*.)+(spec|test).[jt]s?(x)",
-        "**/integration-tests/*.integration.test.[jt]s?(x)"
+        "**/*.test.js?(x)",
+        "**/integration-tests/*.integration.test.js?(x)"
       ],
       "moduleNameMapper": {
         "\\.(css|scss)$": "identity-obj-proxy"
