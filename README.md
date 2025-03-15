@@ -93,8 +93,8 @@ CI run links for Milestone 1 submission:
     </thead>
     <tbody>
         <tr>
-            <th> 1 </th>
-            <th>
+            <td> 1 </td>
+            <td>
                 <ul>
                     <li> ./client/src/hooks/useCategory.js </li>
                     <li> ./client/src/context/cart.js </li>
@@ -114,12 +114,12 @@ CI run links for Milestone 1 submission:
                     <li> ./client/src/context/auth.js </li>
                     <li> ./client/src/context/search.js </li>
                 </ul>
-            </th>
-            <th> Lin Xingting </th>
+            </td>
+            <td> Lin Xingting </td>
         </tr>
         <tr>
-            <th> 2 </th>
-            <th>
+            <td> 2 </td>
+            <td>
                 <ul>
                     <li> ./client/src/pages/admin/Users.js </li>
                     <li> ./server.js </li>
@@ -142,12 +142,12 @@ CI run links for Milestone 1 submission:
                     </ul>
                     <li> ./config/db.js </li>
                 </ul>
-            </th>
-            <th> Lam Jiu Fong </th>
+            </td>
+            <td> Lam Jiu Fong </td>
         </tr>
         <tr>
-            <th> 3 </th>
-            <th>
+            <td> 3 </td>
+            <td>
                 <ul>
                     <li> ./controllers/categoryController.js </li>
                     <li> ./client/src/pages/admin/CreateCategory.js </li>
@@ -163,12 +163,12 @@ CI run links for Milestone 1 submission:
                     </ul>
                     <li> ./client/src/components/Form/SearchInput.js </li>
                 </ul>
-            </th>
-            <th> Edmund Kwek Shi Kwang </th>
+            </td>
+            <td> Edmund Kwek Shi Kwang </td>
         </tr>
         <tr>
-            <th> 4 </th>
-            <th>
+            <td> 4 </td>
+            <td>
                 <ul>
                     <li> ./client/src/pages/admin/Products.js </li>
                     <li> ./controllers/productController.js </li>
@@ -187,12 +187,12 @@ CI run links for Milestone 1 submission:
                     <li> ./client/src/pages/admin/UpdateProduct.js </li>
                     <li> ./client/src/pages/ProductDetails.js </li>                    
                 </ul>
-            </th>
-            <th> Gerald Neo Ee Ren </th>
+            </td>
+            <td> Gerald Neo Ee Ren </td>
         </tr>
         <tr>
-            <th> 5 </th>
-            <th>
+            <td> 5 </td>
+            <td>
                 <ul>
                     <li> ./client/src/components/Header.js </li>
                     <li> ./client/src/components/Layout.js </li>
@@ -218,13 +218,140 @@ CI run links for Milestone 1 submission:
                         <li>orderStatusController</li>
                     </ul>
                 </ul>
-            </th>
-            <th> Kew Kok Wen </th>
+            </td>
+            <td> Kew Kok Wen </td>
         </tr>
     </tbody>
 </table>
 
 # Milestone 2
+
+## Running Integration Tests
+
+### Step 1: Switch to the `main` Git Branch
+- After cloning the repo, switch to the `main` git branch.
+
+To switch to the `main` branch:
+```
+git switch main
+```
+
+### Step 2: Install npm Packages (Backend)
+- At the root folder of the repository, install the necessary packages for backend.
+- You should see a newly created `node_modules` folder in the root folder. 
+
+To install the packages for backend:
+```
+npm install
+```
+
+### Step 3: Install npm Packages (Frontend)
+- At the `client` folder of the repository, install the necessary packages for frontend.
+- You should see a newly created `node_modules` folder in the `client` folder.
+
+To change directory to the `client` folder:
+```
+cd client
+```
+
+To install the packages for frontend:
+```
+npm install
+```
+
+### Step 4: Run Integration Tests
+- At the root folder of the repository, run the npm scripts for integration tests.
+
+To change directory back to the root folder:
+```
+cd ..
+```
+
+To run integration tests only for frontend:
+```
+npm run integration:frontend
+```
+
+To run integration tests only for backend:
+```
+npm run integration:backend
+```
+
+To run integration tests for both frontend and backend:
+```
+npm run integration
+```
+
+## Running UI Tests
+
+### Step 1: Switch to the `main` Git Branch
+- After cloning the repo, switch to the `main` git branch.
+
+To switch to the `main` branch:
+```
+git switch main
+```
+
+### Step 2: Install npm Packages (Backend)
+- At the root folder of the repository, install the necessary packages for backend.
+- You should see a newly created `node_modules` folder in the root folder. 
+
+To install the packages for backend:
+```
+npm install
+```
+
+### Step 3: Install npm Packages (Frontend)
+- At the `client` folder of the repository, install the necessary packages for frontend.
+- You should see a newly created `node_modules` folder in the `client` folder.
+
+To change directory to the `client` folder:
+```
+cd client
+```
+
+To install the packages for frontend:
+```
+npm install
+```
+
+### Step 4: Start Webserver (in Dev Mode)
+- At the root folder of the repository, run the webserver to start the frontend and backend.
+
+To change directory back to the root folder:
+```
+cd ..
+```
+
+To start webserver for both frontend and backend:
+```
+npm run dev
+```
+
+To check if the frontend is running, open the following URL in your browser:
+```
+http://localhost:3000/
+```
+
+To check if the backend is running, open the following URL in your browser:
+```
+http://localhost:6060/
+```
+
+### Step 5: Run UI Tests
+- At the root folder of the repository, run the npm scripts for UI tests.
+- Before running the tests, ensure that the web application is already up.
+- The UI tests are configured to use the admin/user credentials (or as non logged in visitors) specified in `playwright-global-setup.cjs`.
+- <b>IMPORTANT NOTE:</b>
+    - Some of the UI tests would involve creation/update/deletion of products/categories/users etc.
+    - To avoid flaky tests due to test pollution, the UI tests are configured to reset the MongoDB data before/after each test. Thus, the UI tests should only be run with one worker, as multiple workers would cause race conditions.
+    - The MongoDB (`MONGO_URL` specified in `.env`) data will be deleted and reloaded (using the sample data provided) multiple times during the UI tests. 
+    - DO NOT RUN this on any production database or any database where you would not want your data to be deleted/modified.
+
+To run UI tests:
+```
+npm run playwright
+```
 
 ## Running Sonarqube Coverage
 
@@ -308,3 +435,88 @@ To stop docker compose services:
 ```
 docker compose -f 'docker-compose.sonarqube.yml' down
 ```
+
+## Integration and UI Test Files Breakdown
+
+<table>
+    <thead>
+        <tr>
+            <th> S/N </th>
+            <th> Assigned </th>
+            <th> Integration Test Files </th>
+            <th> UI Test Files </th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td> 1 </td>
+            <td> Lin Xingting </td>
+            <td>
+                <ul>
+                    <li></li>
+                </ul>
+            </td>
+            <td>
+                <ul>
+                    <li></li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td> 2 </td>
+            <td> Lam Jiu Fong </td>
+            <td>
+                <ul>
+                    <li></li>
+                </ul>
+            </td>
+            <td>
+                <ul>
+                    <li></li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td> 3 </td>
+            <td> Edmund Kwek Shi Kwang </td>
+            <td>
+                <ul>
+                    <li></li>
+                </ul>
+            </td>
+            <td>
+                <ul>
+                    <li> ./ui-tests/categories-mgmt.spec.cjs </li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td> 4 </td>
+            <td> Gerald Neo Ee Ren </td>
+            <td>
+                <ul>
+                    <li></li>
+                </ul>
+            </td>
+            <td>
+                <ul>
+                    <li></li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td> 5 </td>
+            <td> Kew Kok Wen </td>
+            <td>
+                <ul>
+                    <li></li>
+                </ul>
+            </td>
+            <td>
+                <ul>
+                    <li></li>
+                </ul>
+            </td>
+        </tr>
+    </tbody>
+</table>
