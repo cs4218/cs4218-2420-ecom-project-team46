@@ -73,7 +73,7 @@ const mockedOrders = [
     _id: faker.string.uuid(),
     status: statuses[Math.floor(Math.random() * statuses.length)],
     buyer: { name: faker.person.fullName() },
-    createAt: moment().subtract(1, "days").toISOString(),
+    createdAt: moment().subtract(1, "days").toISOString(),
     payment: { success: true },
     products,
   },
@@ -114,7 +114,7 @@ describe("User orders page", () => {
     });
   });
 
-  it("should log an error when fetching reports fails", async () => {
+  it("should log an error when fetching orders fails", async () => {
     axios.get.mockRejectedValue(new Error());
     const consoleSpy = jest.spyOn(console, "log");
     render(<Orders />);
@@ -166,7 +166,7 @@ describe("User orders page", () => {
           _id: faker.string.uuid(),
           status,
           buyer: { name },
-          createAt: moment().subtract(1, "days").toISOString(),
+          createdAt: moment().subtract(1, "days").toISOString(),
           payment: { success: false },
           products,
         },
