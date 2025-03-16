@@ -48,7 +48,7 @@ const Orders = () => {
                       <td>{i + 1}</td>
                       <td>{o?.status}</td>
                       <td>{o?.buyer?.name}</td>
-                      <td>{moment(o?.createAt).fromNow()}</td>
+                      <td>{moment(o?.createdAt).fromNow()}</td>
                       <td>{o?.payment?.success ? "Success" : "Failed"}</td>
                       <td>{o?.products?.length}</td>
                     </tr>
@@ -69,7 +69,7 @@ const Orders = () => {
                       <div className="col-md-8">
                         <p>{p?.name}</p>
                         <p>{p?.description.substring(0, 30)}</p>
-                        <p>Price : {p?.price}</p>
+                        <p>Price : {Number(p?.price).toFixed(2)}</p>
                       </div>
                     </div>
                   ))}
