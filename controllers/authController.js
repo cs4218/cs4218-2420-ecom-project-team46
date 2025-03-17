@@ -31,7 +31,8 @@ export const registerController = async (req, res) => {
     const exisitingUser = await userModel.findOne({ email });
     //exisiting user
     if (exisitingUser) {
-      return res.status(409).send({ // status code changed from 200 to 409 to indicate Conflict
+      // status code changed from 200 to 409 to indicate Conflict
+      return res.status(409).send({
         success: false,
         message: "Already Register please login",
       });
@@ -211,10 +212,10 @@ export const updateProfileController = async (req, res) => {
 export const getAllUsersController = async (req, res) => {
   try {
     const users = await userModel.find();
-    
-    res.status(200).send({ 
-      success: true, 
-      users 
+
+    res.status(200).send({
+      success: true,
+      users,
     });
   } catch (error) {
     console.error(error);
@@ -268,12 +269,35 @@ export const orderStatusController = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status } = req.body;
-    const orders = await orderModel.findByIdAndUpdate(
+    const validStatuses = [
+      "Not Processed",
+      "Processing",
+      "Shipped",
+      "Delivered",
+      "Cancelled",
+    ];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid status",
+      });
+    }
+    const updatedOrder = await orderModel.findByIdAndUpdate(
       orderId,
       { status },
       { new: true }
     );
-    res.json(orders);
+    if (!updatedOrder) {
+      return res.status(404).send({
+        success: false,
+        message: "Order not found",
+      });
+    }
+    res.json({
+      success: true,
+      message: "Order status updated successfully",
+      order: updatedOrder,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).send({

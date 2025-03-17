@@ -106,7 +106,7 @@ const mockedOrders = [
     _id: faker.string.uuid(),
     status: statuses[Math.floor(Math.random() * statuses.length)],
     buyer: { name: faker.person.fullName() },
-    createAt: moment().subtract(1, "hour").toISOString(),
+    createdAt: moment().subtract(1, "hour").toISOString(),
     payment: { success: true },
     products,
   },
@@ -147,7 +147,7 @@ describe("Admin orders page", () => {
     });
   });
 
-  it("should log an error when fetching reports fails", async () => {
+  it("should log an error when fetching orders fails", async () => {
     axios.get.mockRejectedValue(new Error());
     const consoleSpy = jest.spyOn(console, "log");
     render(<AdminOrders />);
@@ -199,7 +199,7 @@ describe("Admin orders page", () => {
           _id: faker.string.uuid(),
           status,
           buyer: { name },
-          createAt: moment().subtract(1, "hour").toISOString(),
+          createdAt: moment().subtract(1, "hour").toISOString(),
           payment: { success: false },
           products,
         },
@@ -300,14 +300,6 @@ describe("Admin orders page", () => {
       expect(axios.get).toHaveBeenCalledTimes(1);
       expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
     });
-
-    // await waitFor(() => {
-    //   expect(toast.error).toHaveBeenCalledWith(
-    //     "Order status change failed. Please try again later."
-    //   );
-    //   expect(axios.get).toHaveBeenCalledTimes(1);
-    //   expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
-    // });
 
     consoleSpy.mockRestore();
   });
