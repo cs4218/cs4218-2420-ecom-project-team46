@@ -8,7 +8,9 @@ export const createCategoryController = async (req, res) => {
         success: false,
         message: "Name is required" });
     }
-    const existingCategory = await categoryModel.findOne({ name });
+    const existingCategory = await categoryModel.findOne({ 
+      slug: { $regex: new RegExp(`^${slugify(name)}$`, "i") } 
+    });
     if (existingCategory) {
       return res.status(200).send({
         success: true,
