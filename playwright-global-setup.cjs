@@ -1,4 +1,5 @@
 const { chromium } = require('@playwright/test');
+import { execSync } from 'child_process';
 
 const adminEmail = 'cs4218admin@test.com';
 const adminPassword = 'cs4218admin@test.com';
@@ -6,6 +7,10 @@ const userEmail = 'cs4218@test.com';
 const userPassword = 'cs4218@test.com';
 
 async function globalSetup() {
+  // Reset DB to populate the accounts first
+  console.log("Performing first reset...")
+  execSync('npm run db:reset', { stdio: 'inherit' });
+
   // --- ADMIN LOGIN ---
   const adminBrowser = await chromium.launch();
   const adminContext = await adminBrowser.newContext();
