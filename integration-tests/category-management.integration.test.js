@@ -243,7 +243,7 @@ describe("Category API Integration", () => {
     expect(updated_matches.length).toBe(1);
   });
 
-  it("should return error message when updated category name clashes with existing category slug", async () => {
+  it("should return error message when updated category slug clashes with another's category slug", async () => {
 
     await categoryModel.create({ name: "Offer", slug: slugify("Offer") });
     await categoryModel.create({ name: "Clearance Items", slug: slugify("Clearance Items") });
@@ -253,16 +253,18 @@ describe("Category API Integration", () => {
     const res = await request(app)
       .put(`/api/v1/category/update-category/${match._id}`)
       .send({ name: "Clearance-Items" });
-
+    
+    const previous_matches = await categoryModel.find({name : "Offer"});
     const updated_matches = await categoryModel.find({ slug: { $regex: new RegExp(`^${slugify("Clearance Items")}$`, "i") } });
 
     expect(res.statusCode).toBe(500);
     expect(res.body.success).toBe(false);
     expect(res.body.message).toBe("Error while updating category");
+    expect(previous_matches.length).toBe(1);
     expect(updated_matches.length).toBe(1);
   });
 
-  it("should return error message when updated category name clashes with existing category slug (case insensitive)", async () => {
+  it("should return error message when updated category slug clashes with another's category slug (case insensitive)", async () => {
 
     await categoryModel.create({ name: "Offer", slug: slugify("Offer") });
     await categoryModel.create({ name: "Clearance Items", slug: slugify("Clearance Items") });
@@ -273,12 +275,54 @@ describe("Category API Integration", () => {
       .put(`/api/v1/category/update-category/${match._id}`)
       .send({ name: "Clearance-items" });
 
+    const previous_matches = await categoryModel.find({name : "Offer"});
     const updated_matches = await categoryModel.find({ slug: { $regex: new RegExp(`^${slugify("Clearance Items")}$`, "i") } });
 
     expect(res.statusCode).toBe(500);
     expect(res.body.success).toBe(false);
     expect(res.body.message).toBe("Error while updating category");
+    expect(previous_matches.length).toBe(1);
     expect(updated_matches.length).toBe(1);
+  });
+
+  it("should allow change if updated category slug is the same with its previous own slug", async () => {
+
+    await categoryModel.create({ name: "Clearance Items", slug: slugify("Clearance Items") });
+
+    const match = await categoryModel.findOne({name : "Clearance Items"});
+
+    const res = await request(app)
+      .put(`/api/v1/category/update-category/${match._id}`)
+      .send({ name: "clearance-items" });
+
+    const previous_matches = await categoryModel.find({name : "Clearance Items"});
+    const updated_matches = await categoryModel.find({name : "clearance-items"});
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toBe("Category updated successfully");
+    expect(updated_matches.length).toBe(1);
+    expect(previous_matches.length).toBe(0);
+  });
+
+  it("should allow change if updated category slug is the same with its previous own slug (case insensitive)", async () => {
+
+    await categoryModel.create({ name: "Clearance Items", slug: slugify("Clearance Items") });
+
+    const match = await categoryModel.findOne({name : "Clearance Items"});
+
+    const res = await request(app)
+      .put(`/api/v1/category/update-category/${match._id}`)
+      .send({ name: "Clearance-items" });
+
+    const previous_matches = await categoryModel.find({name : "Clearance Items"});
+    const updated_matches = await categoryModel.find({name : "Clearance-items"});
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toBe("Category updated successfully");
+    expect(updated_matches.length).toBe(1);
+    expect(previous_matches.length).toBe(0);
   });
 
   it("should delete an existing category", async () => {
