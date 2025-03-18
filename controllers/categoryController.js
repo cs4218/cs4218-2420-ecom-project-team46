@@ -46,6 +46,14 @@ export const updateCategoryController = async (req, res) => {
         success: false,
         message: "Name is required" });
     }
+
+    const existingCategory = await categoryModel.findOne({ 
+      slug: { $regex: new RegExp(`^${slugify(name)}$`, "i") } 
+    });
+    if (existingCategory) {
+      throw new Error("Category with same slug already exists!");
+    }
+
     const category = await categoryModel.findByIdAndUpdate(
       id,
       { name, slug: slugify(name) },
