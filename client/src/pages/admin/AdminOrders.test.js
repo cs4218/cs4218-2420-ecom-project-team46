@@ -315,7 +315,7 @@ describe("Admin orders page", () => {
         expect(screen.getByText(product.name)).toBeInTheDocument();
         expect(screen.getByText(truncated_descriptions[i])).toBeInTheDocument();
         expect(
-          screen.getByText(`Price : ${product.price}`)
+          screen.getByText(`Price : ${product.price.toFixed(2)}`)
         ).toBeInTheDocument();
       });
     });
