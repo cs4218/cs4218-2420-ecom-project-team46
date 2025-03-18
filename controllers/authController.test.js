@@ -658,7 +658,11 @@ describe("orderStatusController", () => {
       { status },
       { new: true }
     );
-    expect(res.json).toHaveBeenCalledWith(mockedOrderResponse);
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      message: "Order status updated successfully",
+      order: mockedOrderResponse,
+    });
   });
 
   it("should log error, return 500 and send error response when updating order status errors", async () => {
