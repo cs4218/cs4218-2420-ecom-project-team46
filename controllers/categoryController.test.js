@@ -68,7 +68,7 @@ it("should check that name is required for category creation", async () => {
 
 	expect(res.status).toHaveBeenCalledWith(401);
 	expect(res.send).toHaveBeenCalledWith(
-			{ message: "Name is required" }
+			{ success: false, message: "Name is required" }
 	);
 });
 
@@ -82,7 +82,7 @@ describe("createCategoryController tests", () => {
 
 		expect(res.status).toHaveBeenCalledWith(401);
 		expect(res.send).toHaveBeenCalledWith(
-				{ message: "Name is required" }
+				{ success: false, message: "Name is required" }
 		);
 	});
 
@@ -186,7 +186,7 @@ describe("updateCategoryController tests", () => {
 
 		expect(res.status).toHaveBeenCalledWith(401);
 		expect(res.send).toHaveBeenCalledWith(
-			{ message: "Name is required" }
+			{ success: false, message: "Name is required" }
 		);
 	});
 
