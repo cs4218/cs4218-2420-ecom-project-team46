@@ -48,10 +48,11 @@ export const updateCategoryController = async (req, res) => {
     }
 
     const existingCategory = await categoryModel.findOne({ 
-      slug: { $regex: new RegExp(`^${slugify(name)}$`, "i") } 
+      slug: { $regex: new RegExp(`^${slugify(name)}$`, "i") },
+      _id: { $ne: id }
     });
     if (existingCategory) {
-      throw new Error("Category with same slug already exists!");
+      throw new Error("Another category with same slug already exists!");
     }
 
     const category = await categoryModel.findByIdAndUpdate(
