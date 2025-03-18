@@ -345,6 +345,7 @@ http://localhost:6060/
 - <b>IMPORTANT NOTE:</b>
     - Some of the UI tests would involve creation/update/deletion of products/categories/users etc.
     - To avoid flaky tests due to test pollution, the UI tests are configured to reset the MongoDB data before/after each test. Thus, the UI tests should only be run with one worker, as multiple workers would cause race conditions.
+    - DO NOT use `npx playwright test` to run the UI tests as multiple workers would be run by default and this would create a race condition where the mongodb would be accessed and modified by multiple workers running in parallel. Please use the command below to ensure deterministic outcomes.
     - The MongoDB (`MONGO_URL` specified in `.env`) data will be deleted and reloaded (using the sample data provided) multiple times during the UI tests. 
     - DO NOT RUN this on any production database or any database where you would not want your data to be deleted/modified.
 
@@ -481,7 +482,12 @@ docker compose -f 'docker-compose.sonarqube.yml' down
             <td> Edmund Kwek Shi Kwang </td>
             <td>
                 <ul>
-                    <li></li>
+                    <li> ./integration-tests/category-management.integration.test.js </li>
+                    <li> ./integration-tests/category-product.integration.test.js </li>
+                    <li> ./integration-tests/search.integration.test.js </li>
+                    <li> ./client/src/integration-tests/category-management.integration.test.js </li>
+                    <li> ./client/src/integration-tests/category-product.integration.test.js </li>
+                    <li> ./client/src/integration-tests/search.integration.test.js </li>
                 </ul>
             </td>
             <td>
