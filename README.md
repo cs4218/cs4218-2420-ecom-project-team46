@@ -493,6 +493,9 @@ docker compose -f 'docker-compose.sonarqube.yml' down
             <td>
                 <ul>
                     <li> ./ui-tests/categories-mgmt.spec.cjs </li>
+                    <li> ./ui-tests/categories.spec.cjs </li>
+                    <li> ./ui-tests/category-product.spec.cjs </li>
+                    <li> ./ui-tests/search.spec.cjs </li>
                 </ul>
             </td>
         </tr>
