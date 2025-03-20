@@ -13,7 +13,7 @@
     "test:backend": "jest --config jest.backend.config.json --runInBand",
     "test:frontend": "jest --config jest.frontend.config.json",
     "test": "concurrently \"npm run test:backend\" \"npm run test:frontend\"",
-    "integration:backend": "jest --config jest.integration.backend.config.json --runInBand",
+    "integration:backend": "jest --config jest.integration.backend.config.json --silent=false",
     "integration:frontend": "jest --config jest.integration.frontend.config.json",
     "integration": "concurrently \"npm run integration:backend\" \"npm run integration:frontend\"",
     "coverage": "jest --config jest.coverage.config.json --runInBand --collect-coverage",

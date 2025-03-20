@@ -1,10 +1,15 @@
 import express from "express";
 import mongoose from "mongoose";
-import { getProductController } from "../controllers/productController";
+import {
+  createProductController,
+  getProductController,
+} from "../controllers/productController";
 import request from "supertest";
 import categoryModel from "../models/categoryModel";
 import productModel from "../models/productModel";
 import { ObjectId } from "mongodb";
+import { describe } from "node:test";
+import ExpressFormidable from "express-formidable";
 
 let app;
 
@@ -32,7 +37,7 @@ const products = [
     description:
       "The latest iPhone with a stunning display and powerful camera.",
     price: 999.99,
-    category: 2,
+    category: categories[2]._id.toString(),
     quantity: 100,
     photo: {
       data: Buffer.from("dummyimage", "utf-8"),
@@ -46,7 +51,7 @@ const products = [
     description:
       "Comfortable and stylish running shoes with responsive cushioning.",
     price: 120.0,
-    category: 1,
+    category: categories[1]._id.toString(),
     quantity: 150,
     photo: {
       data: Buffer.from("dummyimage", "utf-8"),
@@ -59,7 +64,7 @@ const products = [
     slug: "samsung-galaxy-s22",
     description: "Samsung's premium flagship phone with excellent performance.",
     price: 899.99,
-    category: 2,
+    category: categories[0]._id.toString(),
     quantity: 200,
     photo: {
       data: Buffer.from("dummyimage", "utf-8"),
@@ -73,7 +78,7 @@ const products = [
     description:
       "Premium noise-canceling headphones with superb sound quality.",
     price: 349.99,
-    category: 0,
+    category: categories[0]._id.toString(),
     quantity: 50,
     photo: {
       data: Buffer.from("dummyimage", "utf-8"),
@@ -86,17 +91,16 @@ const insertDummyData = async () => {
   // clears mongodb, then inserts the dummy rows from products and categories arrays
   await productModel.deleteMany({});
   await categoryModel.deleteMany({});
-  const createdCategories = await categoryModel.insertMany(categories);
-  for (let i = 0; i < products.length; i++) {
-    products[i].category = createdCategories[products[i].category]._id;
-  }
+  await categoryModel.insertMany(categories);
   await productModel.insertMany(products);
 };
 beforeAll(async () => {
   await mongoose.connect(process.env.MONGO_URL);
   app = express();
   app.use(express.json());
+  app.use(ExpressFormidable());
   app.get("/api/v1/product/get-product", getProductController);
+  app.post("/api/v1/product/create-product", createProductController);
 });
 
 afterAll(async () => {
@@ -112,6 +116,82 @@ beforeEach(async () => {
 afterEach(async () => {
   await productModel.deleteMany({});
   await categoryModel.deleteMany({});
+});
+
+describe("createProductController integration tests", () => {
+  it("should successfully create a product without photo", async () => {
+    await insertDummyData();
+    const newProduct = {
+      name: "Product name",
+      description: "Product description",
+      price: 100,
+      category: products[0].category,
+      quantity: 10,
+    };
+    const originalCount = await productModel.countDocuments({});
+    const response = await request(app)
+      .post("/api/v1/product/create-product")
+      .field("name", newProduct.name)
+      .field("description", newProduct.description)
+      .field("price", newProduct.price)
+      .field("category", newProduct.category)
+      .field("quantity", newProduct.quantity);
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe("Product Created Successfully");
+    const newCount = await productModel.countDocuments({});
+    expect(originalCount).toEqual(newCount - 1);
+    const addedDocument = await productModel.findOne({ name: newProduct.name });
+    expect(addedDocument.name).toBe(newProduct.name);
+    expect(addedDocument.description).toBe(newProduct.description);
+    expect(addedDocument.price).toBe(newProduct.price);
+    expect(addedDocument.category.toString()).toBe(
+      newProduct.category.toString()
+    );
+    expect(addedDocument.quantity).toBe(newProduct.quantity);
+  });
+  it("should successfully create a product with photo", async () => {
+    await insertDummyData();
+    const newProduct = {
+      name: "Product name",
+      description: "Product description",
+      price: 100,
+      category: products[0].category,
+      quantity: 10,
+    };
+    const response = await request(app)
+      .post("/api/v1/product/create-product")
+      .field("name", newProduct.name)
+      .field("description", newProduct.description)
+      .field("price", newProduct.price)
+      .field("category", newProduct.category)
+      .field("quantity", newProduct.quantity)
+      .attach("photo", Buffer.from("fake photo content"), "fake-photo.jpg");
+    expect(response.status).toBe(201);
+    const addedDocument = await productModel.findOne({ name: newProduct.name });
+    expect(addedDocument.photo).toBeDefined();
+    expect(addedDocument.photo.data).toBeDefined();
+  });
+  it("should error when a field is missing", async () => {
+    await insertDummyData();
+    const newProduct = {
+      name: "Product name",
+      description: "Product description",
+      price: 100,
+      category: products[0].category,
+      quantity: 10,
+    };
+    const response = await request(app)
+      .post("/api/v1/product/create-product")
+      // .field("name", newProduct.name) // remove name from the form
+      .field("description", newProduct.description)
+      .field("price", newProduct.price)
+      .field("category", newProduct.category)
+      .field("quantity", newProduct.quantity)
+      .attach("photo", Buffer.from("fake photo content"), "fake-photo.jpg");
+    expect(response.status).toBe(500);
+    expect(response.body.error).toBe("Name is Required");
+  });
 });
 
 describe("getProductController integration tests", () => {
