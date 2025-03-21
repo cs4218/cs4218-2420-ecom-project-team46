@@ -37,7 +37,6 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  jest.clearAllMocks();
   await categoryModel.deleteMany({});
 });
 
