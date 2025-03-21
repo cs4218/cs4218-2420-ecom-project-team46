@@ -287,6 +287,12 @@ npm install
 ### Step 4: Run Integration Tests
 
 - At the root folder of the repository, run the npm scripts for integration tests.
+- <b>IMPORTANT NOTE:</b>
+  - For the frontend integration tests, a backend server will be spun up which will use the MongoDB (`MONGO_URL` specified in `.env`).
+  - Some of the tests would involve creation/update/deletion of products/categories/users etc.
+  - To avoid flaky tests due to test pollution, the tests are configured to reset the MongoDB data before/after each test. Thus, the tests should only be run with one worker, as multiple workers would cause race conditions.
+  - The MongoDB (`MONGO_URL` specified in `.env`) data will be deleted and reloaded (using the sample data provided) multiple times during the tests.
+  - DO NOT RUN this on any production database or any database where you would not want your data to be deleted/modified.
 
 To change directory back to the root folder:
 
