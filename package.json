@@ -13,10 +13,10 @@
     "test:backend": "jest --config jest.backend.config.json --runInBand",
     "test:frontend": "jest --config jest.frontend.config.json",
     "test": "concurrently \"npm run test:backend\" \"npm run test:frontend\"",
-    "integration:backend": "jest --config jest.integration.backend.config.json --silent=false",
-    "integration:frontend": "concurrently --kill-others \"npm run server\" \"npx wait-on http://localhost:6060 && jest --config jest.integration.frontend.config.json \" && kill $(lsof -t -i:6060) || true",
+    "integration:backend": "jest --config jest.integration.backend.config.json --silent=false --runInBand",
+    "integration:frontend": "concurrently --kill-others \"npm run server\" \"npx wait-on http://localhost:6060 && jest --config jest.integration.frontend.config.json --runInBand\" && kill $(lsof -t -i:6060) || true",
     "integration": "concurrently \"npm run integration:backend\" \"npm run integration:frontend\"",
-    "coverage": "jest --config jest.coverage.config.json --runInBand --collect-coverage",
+    "coverage": "concurrently --kill-others \"npm run server\" \"npx wait-on http://localhost:6060 && jest --config jest.coverage.config.json --runInBand --collect-coverage\" && kill $(lsof -t -i:6060) || true",
     "db:reset": "node ./reset-mongodb/reset-mongodb.js",
     "playwright": "npx playwright test --workers=1"
   },
