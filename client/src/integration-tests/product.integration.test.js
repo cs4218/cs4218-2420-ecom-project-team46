@@ -67,7 +67,7 @@ const products = [
   { name: "NUS T-shirt", description: "Plain NUS T-shirt for sale" },
 ];
 
-describe("Admin product management integration tests", () => {
+describe("Admin product integration tests", () => {
   test("/pages/admin/Products.js component correctly shows all products", async () => {
     // render the entire app as done in App.js, instead of individual components
     render(
@@ -166,5 +166,52 @@ describe("Admin product management integration tests", () => {
     // check that the new product list has loaded
     await waitFor(() => screen.getByText(products[1].name));
     expect(screen.queryByText(products[0].name)).not.toBeInTheDocument();
+  });
+});
+
+describe("User product integration tests", () => {
+  test("homepage should show all the products", async () => {
+    render(
+      <AuthProvider>
+        <SearchProvider>
+          <CartProvider>
+            <MemoryRouter initialEntries={["/"]}>
+              <App />
+            </MemoryRouter>
+          </CartProvider>
+        </SearchProvider>
+      </AuthProvider>
+    );
+
+    await waitFor(() => screen.getAllByText("More Details"));
+    products.forEach(async (product) => {
+      await expect(screen.getByText(product.name)).toBeInTheDocument();
+      await expect(
+        screen.getByText(product.description.substring(0, 60) + "...")
+      ).toBeInTheDocument();
+    });
+  });
+  test("More details button from homepage should link to Product Details page", async () => {
+    render(
+      <AuthProvider>
+        <SearchProvider>
+          <CartProvider>
+            <MemoryRouter initialEntries={["/"]}>
+              <App />
+            </MemoryRouter>
+          </CartProvider>
+        </SearchProvider>
+      </AuthProvider>
+    );
+    // wait for the product link to appear
+    await waitFor(() => screen.getAllByText("More Details"));
+    const productLink = screen.getAllByText("More Details")[0];
+    fireEvent.click(productLink);
+
+    // ensure that the product details are visible
+    await waitFor(() => screen.getByText("Product Details"));
+    await waitFor(() => screen.getAllByText("ADD TO CART"));
+    await waitFor(() => screen.getByText("Name : " + products[0].name));
+    expect(screen.getByText("Name : " + products[0].name)).toBeInTheDocument();
   });
 });
