@@ -11,5 +11,6 @@
     "\\.(css|scss)$": "identity-obj-proxy"
   },
   "transformIgnorePatterns": ["/node_modules/"],
-  "silent": true
+  "silent": true,
+  "setupFiles": ["<rootDir>/jest.setup.js"]
 }
