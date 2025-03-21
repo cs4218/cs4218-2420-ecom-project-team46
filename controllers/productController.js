@@ -219,7 +219,11 @@ export const productFiltersController = async (req, res) => {
     const { checked, radio } = req.body;
     let args = {};
     if (checked.length > 0) args.category = checked;
-    if (radio.length) args.price = { $gte: radio[0], $lte: radio[1] };
+    if (radio.length === 2) {
+      args.price = { $gte: radio[0], $lte: radio[1] };
+    } else if (radio.length === 1) {
+      args.price = { $gte: radio[0] };
+    }
     const products = await productModel.find(args);
     res.status(200).send({
       success: true,
@@ -263,7 +267,7 @@ export const productListController = async (req, res) => {
       .select("-photo")
       .skip((page - 1) * perPage)
       .limit(perPage)
-      .sort({ createdAt: -1 });
+      .sort({ _id: -1 });
     res.status(200).send({
       success: true,
       products,
@@ -335,7 +339,7 @@ export const productCategoryController = async (req, res) => {
 
     if (!category) {
       throw new Error("Category not found!");
-    };
+    }
 
     res.status(200).send({
       success: true,
