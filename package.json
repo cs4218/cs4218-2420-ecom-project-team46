@@ -14,7 +14,7 @@
     "test:frontend": "jest --config jest.frontend.config.json",
     "test": "concurrently \"npm run test:backend\" \"npm run test:frontend\"",
     "integration:backend": "jest --config jest.integration.backend.config.json --silent=false",
-    "integration:frontend": "jest --config jest.integration.frontend.config.json",
+    "integration:frontend": "concurrently --kill-others \"npm run server\" \"npx wait-on http://localhost:6060 && jest --config jest.integration.frontend.config.json \" && kill $(lsof -t -i:6060) || true",
     "integration": "concurrently \"npm run integration:backend\" \"npm run integration:frontend\"",
     "coverage": "jest --config jest.coverage.config.json --runInBand --collect-coverage",
     "db:reset": "node ./reset-mongodb/reset-mongodb.js",
@@ -55,6 +55,7 @@
     "moment": "^2.30.1",
     "mongodb-memory-server": "^10.1.3",
     "sonarqube-scanner": "^3.3.0",
-    "supertest": "^7.0.0"
+    "supertest": "^7.0.0",
+    "wait-on": "^8.0.3"
   }
 }
