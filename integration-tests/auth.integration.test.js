@@ -6,25 +6,25 @@ import userModel from "../models/userModel.js";
 import authRoute from "../routes/authRoute.js";
 import { hashPassword } from "../helpers/authHelper.js";
 
-// in this integration test, I am testing the entire HTTP request flow—including the routing, middleware, and controller interactions—as they would work together in the real application. Since the authRoute file already imports and uses the controllers, when mount authRoute in Express app, any request made to the endpoints will naturally invoke the corresponding controller functions.
-// didn't import the controllers individually in this integration test file. Importing the route is sufficient, as it encapsulates all the necessary controller logic.
+// In this integration test, we are testing the entire HTTP request flow—including the routing,
+// middleware, and controller interactions—as they would work together in the real application.
+// Additionally, these tests verify that the expected changes are persisted in the database.
 
 let app;
 let mongoServer;
 
 beforeAll(async () => {
-  // set JWT
+  // Set JWT secret for testing
   process.env.JWT_SECRET = "testsecret";
 
-  // start up DB
+  // Start up in-memory DB
   mongoServer = await MongoMemoryServer.create();
   const uri = mongoServer.getUri();
   await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
   
-  // init
+  // Initialize Express app and mount auth-related routes
   app = express();
   app.use(express.json());
-  // auth-related router
   app.use("/api/v1/auth", authRoute);
 });
 
@@ -34,13 +34,13 @@ afterAll(async () => {
 });
 
 describe("Auth API Integration", () => {
-  // cleanup env
+  // Clean up database before each test
   beforeEach(async () => {
     await userModel.deleteMany({});
   });
 
   describe("POST /api/v1/auth/register", () => {
-    it("should register a user with valid data", async () => {
+    it("should register a user with valid data and persist the user in the DB", async () => {
       const res = await request(app)
         .post("/api/v1/auth/register")
         .send({
@@ -54,6 +54,11 @@ describe("Auth API Integration", () => {
       expect(res.statusCode).toBe(201);
       expect(res.body).toHaveProperty("user");
       expect(res.body.user).toHaveProperty("email", "john@example.com");
+
+      // Verify in the database that the user was created
+      const userInDb = await userModel.findOne({ email: "john@example.com" });
+      expect(userInDb).toBeTruthy();
+      expect(userInDb.name).toBe("John Doe");
     });
 
     // unit tests already cover the detailed behavior (using test.each for each missing required field)
@@ -71,10 +76,14 @@ describe("Auth API Integration", () => {
         });
       expect(res.statusCode).toBe(400);
       expect(res.body).toHaveProperty("message", "Name is Required");
+
+      // Verify that no user is created in the DB
+      const userInDb = await userModel.findOne({ email: "john@example.com" });
+      expect(userInDb).toBeNull();
     });
 
     it("should not register a user if the email is already registered", async () => {
-      // pre-create a user
+      // Pre-create a user
       await userModel.create({
         name: "Existing User",
         email: "existing@example.com",
@@ -96,12 +105,16 @@ describe("Auth API Integration", () => {
         });
       expect(res.statusCode).toBe(409);
       expect(res.body).toHaveProperty("message", "Already Register please login");
+
+      // Verify that there is still only one user with that email in the DB
+      const users = await userModel.find({ email: "existing@example.com" });
+      expect(users.length).toBe(1);
     });
   });
 
   describe("POST /api/v1/auth/login", () => {
     beforeEach(async () => {
-      // pre-create a user
+      // Pre-create a user for login tests
       await userModel.create({
         name: "John Doe",
         email: "john@example.com",
@@ -150,7 +163,7 @@ describe("Auth API Integration", () => {
 
   describe("POST /api/v1/auth/forgot-password", () => {
     beforeEach(async () => {
-      // pre-create a user
+      // Pre-create a user for forgot-password tests
       await userModel.create({
         name: "John Doe",
         email: "john@example.com",
@@ -161,7 +174,11 @@ describe("Auth API Integration", () => {
       });
     });
 
-    it("should reset password with valid email, answer, and new password", async () => {
+    it("should reset password with valid email, answer, and new password, and update the DB", async () => {
+      // Get the user before password reset
+      const userBefore = await userModel.findOne({ email: "john@example.com" });
+      const oldPasswordHash = userBefore.password;
+
       const res = await request(app)
         .post("/api/v1/auth/forgot-password")
         .send({
@@ -172,7 +189,11 @@ describe("Auth API Integration", () => {
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty("message", "Password Reset Successfully");
 
-      // verify whether the password is updated by loging in with the new password
+      // Verify in the DB that the password hash has been updated
+      const userAfter = await userModel.findOne({ email: "john@example.com" });
+      expect(userAfter.password).not.toEqual(oldPasswordHash);
+
+      // Verify that the user can now login with the new password
       const loginRes = await request(app)
         .post("/api/v1/auth/login")
         .send({
@@ -184,6 +205,10 @@ describe("Auth API Integration", () => {
     });
 
     it("should not reset password with wrong answer", async () => {
+      // Get the current password hash
+      const userBefore = await userModel.findOne({ email: "john@example.com" });
+      const oldPasswordHash = userBefore.password;
+
       const res = await request(app)
         .post("/api/v1/auth/forgot-password")
         .send({
@@ -193,9 +218,17 @@ describe("Auth API Integration", () => {
         });
       expect(res.statusCode).toBe(401);
       expect(res.body).toHaveProperty("message", "Wrong Email Or Answer");
+
+      // Verify in the DB that the password hash has not changed
+      const userAfter = await userModel.findOne({ email: "john@example.com" });
+      expect(userAfter.password).toEqual(oldPasswordHash);
     });
 
     it("should not reset password if required fields are missing", async () => {
+      // Get the current password hash
+      const userBefore = await userModel.findOne({ email: "john@example.com" });
+      const oldPasswordHash = userBefore.password;
+  
       const res = await request(app)
         .post("/api/v1/auth/forgot-password")
         .send({
@@ -205,6 +238,10 @@ describe("Auth API Integration", () => {
         });
       expect(res.statusCode).toBe(400);
       expect(res.body).toHaveProperty("message", "New Password is required");
+  
+      // Verify in the DB that the password hash has not changed
+      const userAfter = await userModel.findOne({ email: "john@example.com" });
+      expect(userAfter.password).toEqual(oldPasswordHash);
     });
   });
 });
