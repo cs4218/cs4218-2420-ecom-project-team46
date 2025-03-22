@@ -78,7 +78,7 @@ describe("Category Product API Integration", () => {
     expect(productNames).toEqual(expect.arrayContaining(["Laptop", "Smartphone", "Tablet"]));
   });
 
-  it("should return only the products in a given category slug even when there are products in different categories", async () => {
+  it("should return only the products in a given category slug even when there are products from other categories in the database", async () => {
 
     const category = await categoryModel.create({ name: "Electronics", slug: slugify("Electronics") });
     const category2 = await categoryModel.create({ name: "Clearance", slug: slugify("Clearance") });
@@ -111,7 +111,7 @@ describe("Category Product API Integration", () => {
       shipping: false,
     });
 
-    const res = await request(app).get("/api/v1/product/product-category/electronics");
+    const res = await request(app).get(`/api/v1/product/product-category/${slugify("Electronics")}`);
 
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
@@ -122,7 +122,7 @@ describe("Category Product API Integration", () => {
     expect(productNames).toEqual(expect.arrayContaining(["Laptop", "Smartphone"]));
   });
 
-  it("should return an empty products array if no products exist for the given category", async () => {
+  it("should return an empty array if no products exist for the given category slug", async () => {
 
     const category = await categoryModel.create({ name: "Books", slug: slugify("Books") });
 
@@ -134,13 +134,13 @@ describe("Category Product API Integration", () => {
     expect(res.body.products.length).toBe(0);
   });
 
-  it("should return error message if the category does not exist", async () => {
+  it("should return error message if the category slug does not exist", async () => {
 
     await categoryModel.create({ name: "Furniture", slug: slugify("Furniture") });
-
     const match = await categoryModel.findOne({name : "Furniture"});
+    await categoryModel.deleteMany({});
 
-    const res = await request(app).get(`/api/v1/product/product-category/${match._id}`);
+    const res = await request(app).get(`/api/v1/product/product-category/${match.slug}`);
 
     expect(res.statusCode).toBe(400);
     expect(res.body.success).toBe(false);

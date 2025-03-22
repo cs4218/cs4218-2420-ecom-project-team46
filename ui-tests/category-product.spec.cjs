@@ -21,7 +21,7 @@ for (const { type, storageState } of storageStates) {
 		 execSync('npm run db:reset', { stdio: 'inherit' });
 		});
 
-		test('each category product page (linked from categories page) should render the key components correctly', async ({ page }) => {
+		test('should render the key components correctly for each category product page linked from categories page', async ({ page }) => {
 			await page.goto('/categories');
 			await page.waitForLoadState('load');
 	
@@ -63,7 +63,7 @@ for (const { type, storageState } of storageStates) {
 			}
 		});
 
-    test('each product details page (linked from each product category page) should have correct url', async ({ page }) => {
+    test('should navigate to each product details page correctly when linked from each product category page', async ({ page }) => {
 			await page.goto('/categories');
 			await page.waitForLoadState('load');
 			

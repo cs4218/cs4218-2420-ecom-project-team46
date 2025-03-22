@@ -41,7 +41,7 @@ afterEach(() => {
 });
 
 describe("Categories Page Integration Tests", () => {
-  it("should be navigated to the correct CategoryProduct pages and each product link should be navigated to correct ProductDetails page", async () => {
+  it("should render all categories with the correct links", async () => {
     
     const categories = await categoryModel.find({});
 
@@ -77,7 +77,7 @@ describe("Categories Page Integration Tests", () => {
 
 describe("CategoryProduct Page Integration Tests", () => {
 
-  it("should return products of category when slug is provided", async () => {
+  it("should return all products under category for each category", async () => {
 
     const categories = await categoryModel.find({});
 

@@ -42,7 +42,7 @@ beforeEach(async () => {
 
 describe("Category API Integration", () => {
 
-  it("should create a category", async () => {
+  it("should create a category successfully", async () => {
 
     const res = await request(app)
       .post("/api/v1/category/create-category")
@@ -57,7 +57,7 @@ describe("Category API Integration", () => {
     expect(matches.length).toBe(1);
   });
 
-  it("should not create category if no category name specified during creation", async () => {
+  it("should not create category if no category name is specified during category creation", async () => {
 
     const res = await request(app)
       .post("/api/v1/category/create-category")
@@ -71,7 +71,7 @@ describe("Category API Integration", () => {
     expect(matches.length).toBe(0);
   });
 
-  it("should not recreate a category with same name", async () => {
+  it("should not recreate another category with same name", async () => {
 
     await request(app)
       .post("/api/v1/category/create-category")
@@ -89,7 +89,7 @@ describe("Category API Integration", () => {
     expect(matches.length).toBe(1);
   });
 
-  it("should not recreate a category with same name (case insensitive)", async () => {
+  it("should not recreate another category with same name (case insensitive)", async () => {
 
     await request(app)
       .post("/api/v1/category/create-category")
@@ -107,7 +107,7 @@ describe("Category API Integration", () => {
     expect(matches.length).toBe(1);
   });
 
-  it("should not recreate a category with same slug", async () => {
+  it("should not recreate another category with same slug", async () => {
 
     await request(app)
       .post("/api/v1/category/create-category")
@@ -125,7 +125,7 @@ describe("Category API Integration", () => {
     expect(matches.length).toBe(1);
   });
 
-  it("should not recreate a category with same slug (case insensitive)", async () => {
+  it("should not recreate another category with same slug (case insensitive)", async () => {
 
     await request(app)
       .post("/api/v1/category/create-category")
@@ -143,7 +143,7 @@ describe("Category API Integration", () => {
     expect(matches.length).toBe(1);
   });
 
-  it("should update an existing category", async () => {
+  it("should update an existing category successfully", async () => {
 
     await categoryModel.create({ name: "Furniture", slug: slugify("Furniture") });
 
@@ -164,7 +164,7 @@ describe("Category API Integration", () => {
 
   });
 
-  it("should not update category if updated name is not specified", async () => {
+  it("should not update category if updated category name is not specified", async () => {
 
     await categoryModel.create({ name: "Furniture", slug: slugify("Furniture") });
 
@@ -184,7 +184,7 @@ describe("Category API Integration", () => {
     expect(previous_matches.length).toBe(1);
   });
 
-  it("should return error message when a category id does not exist during update", async () => {
+  it("should return error message when the category id does not exist during category update", async () => {
 
     await categoryModel.create({ name: "Furniture", slug: slugify("Furniture") });
 
@@ -204,7 +204,7 @@ describe("Category API Integration", () => {
     expect(updated_matches.length).toBe(0);
   });
 
-  it("should return error message when updated category name clashes with existing category name", async () => {
+  it("should return error message when updated category name is the same as another existing category name", async () => {
 
     await categoryModel.create({ name: "Clothing", slug: slugify("Clothing") });
     await categoryModel.create({ name: "Apparel", slug: slugify("Apparel") });
@@ -223,7 +223,7 @@ describe("Category API Integration", () => {
     expect(updated_matches.length).toBe(1);
   });
 
-  it("should return error message when updated category name clashes with existing category name (case insensitive)", async () => {
+  it("should return error message when updated category name is the same as another existing category name (case insensitive)", async () => {
 
     await categoryModel.create({ name: "Clothing", slug: slugify("Clothing") });
     await categoryModel.create({ name: "Apparel", slug: slugify("Apparel") });
@@ -242,7 +242,7 @@ describe("Category API Integration", () => {
     expect(updated_matches.length).toBe(1);
   });
 
-  it("should return error message when updated category slug clashes with another's category slug", async () => {
+  it("should return error message when updated category slug is the same as another existing category slug", async () => {
 
     await categoryModel.create({ name: "Offer", slug: slugify("Offer") });
     await categoryModel.create({ name: "Clearance Items", slug: slugify("Clearance Items") });
@@ -263,7 +263,7 @@ describe("Category API Integration", () => {
     expect(updated_matches.length).toBe(1);
   });
 
-  it("should return error message when updated category slug clashes with another's category slug (case insensitive)", async () => {
+  it("should return error message when updated category slug is the same as another existing category slug (case insensitive)", async () => {
 
     await categoryModel.create({ name: "Offer", slug: slugify("Offer") });
     await categoryModel.create({ name: "Clearance Items", slug: slugify("Clearance Items") });
@@ -284,7 +284,7 @@ describe("Category API Integration", () => {
     expect(updated_matches.length).toBe(1);
   });
 
-  it("should allow change if updated category slug is the same with its previous own slug", async () => {
+  it("should allow change if updated category slug is the same with its own previous slug", async () => {
 
     await categoryModel.create({ name: "Clearance Items", slug: slugify("Clearance Items") });
 
@@ -292,10 +292,10 @@ describe("Category API Integration", () => {
 
     const res = await request(app)
       .put(`/api/v1/category/update-category/${match._id}`)
-      .send({ name: "clearance-items" });
+      .send({ name: "Clearance-Items" });
 
     const previous_matches = await categoryModel.find({name : "Clearance Items"});
-    const updated_matches = await categoryModel.find({name : "clearance-items"});
+    const updated_matches = await categoryModel.find({name : "Clearance-Items"});
 
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
@@ -304,7 +304,7 @@ describe("Category API Integration", () => {
     expect(previous_matches.length).toBe(0);
   });
 
-  it("should allow change if updated category slug is the same with its previous own slug (case insensitive)", async () => {
+  it("should allow change if updated category slug is the same with its own previous slug (case insensitive)", async () => {
 
     await categoryModel.create({ name: "Clearance Items", slug: slugify("Clearance Items") });
 
@@ -324,7 +324,7 @@ describe("Category API Integration", () => {
     expect(previous_matches.length).toBe(0);
   });
 
-  it("should delete an existing category", async () => {
+  it("should delete an existing category successfully", async () => {
 
     await categoryModel.create({ name: "Furniture", slug: slugify("Furniture") });
 
@@ -342,7 +342,7 @@ describe("Category API Integration", () => {
     expect(updated_matches.length).toBe(0);
   });
 
-  it("should return error message when a category id does not exist during delete", async () => {
+  it("should return error message when the category id does not exist during category deletion", async () => {
 
     await categoryModel.create({ name: "Furniture", slug: slugify("Furniture") });
 
@@ -358,7 +358,7 @@ describe("Category API Integration", () => {
     expect(res.body.message).toBe("Error while deleting category");
   });
 
-  it("should fetch all categories when there are existing categories", async () => {
+  it("should fetch all categories when there are existing categories in the database", async () => {
 
     await categoryModel.create({ name: "Furniture", slug: slugify("Furniture") });
     await categoryModel.create({ name: "Beauty", slug: slugify("Beauty") });
@@ -369,14 +369,14 @@ describe("Category API Integration", () => {
     expect(res.body.category.length).toBe(3);
   });
 
-  it("should return no categories when no category present", async () => {
+  it("should not show any categories when no category present in the database", async () => {
 
     const res = await request(app).get("/api/v1/category/get-category");
     expect(res.statusCode).toBe(200);
     expect(res.body.category.length).toBe(0);
   });
 
-  it("should get a single category by slug", async () => {
+  it("should get a single category by slug successfully", async () => {
 
     const categoryName = "Outdoor Camping";
     const expectedSlug = slugify(categoryName);
@@ -392,7 +392,7 @@ describe("Category API Integration", () => {
     expect(res.body.category.name).toBe(categoryName);
   });
 
-  it("should return no categories when get a single category by slug does not exist", async () => {
+  it("should return not return any single category when slug does not exist", async () => {
 
     const categoryName = "Outdoor Camping";
     const expectedSlug = slugify(categoryName);
