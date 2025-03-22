@@ -87,6 +87,47 @@ describe("Admin product integration tests", () => {
       expect(screen.getByText(product.description)).toBeInTheDocument();
     });
   });
+
+  it("should have working creation of product in <CreateProduct /> component", async () => {
+    render(
+      <AuthProvider>
+        <SearchProvider>
+          <CartProvider>
+            <MemoryRouter initialEntries={["/dashboard/admin/create-product"]}>
+              <App />
+            </MemoryRouter>
+          </CartProvider>
+        </SearchProvider>
+      </AuthProvider>
+    );
+    await waitFor(() => screen.getByText("CREATE PRODUCT"));
+    // Fill in the Name
+    const nameInput = screen.getByPlaceholderText("write a name");
+    fireEvent.change(nameInput, { target: { value: "Test Product" } });
+    expect(nameInput.value).toBe("Test Product");
+
+    // Fill in the Description
+    const descriptionInput = screen.getByPlaceholderText("write a description");
+    fireEvent.change(descriptionInput, {
+      target: { value: "This is a test product" },
+    });
+    expect(descriptionInput.value).toBe("This is a test product");
+
+    // Fill in the Price
+    const priceInput = screen.getByPlaceholderText("write a Price");
+    fireEvent.change(priceInput, { target: { value: "199" } });
+    expect(priceInput.value).toBe("199");
+
+    // Fill in the Quantity
+    const quantityInput = screen.getByPlaceholderText("write a quantity");
+    fireEvent.change(quantityInput, { target: { value: "5" } });
+    expect(quantityInput.value).toBe("5");
+
+    const createButton = screen.getByText("CREATE PRODUCT");
+    fireEvent.click(createButton);
+
+    await waitFor(() => screen.getByText("Test Product"));
+  });
   it("should have working links to <UpdateProduct /> from <Product /> and correctly perform update", async () => {
     render(
       <AuthProvider>
@@ -213,5 +254,28 @@ describe("User product integration tests", () => {
     await waitFor(() => screen.getAllByText("ADD TO CART"));
     await waitFor(() => screen.getByText("Name : " + products[0].name));
     expect(screen.getByText("Name : " + products[0].name)).toBeInTheDocument();
+  });
+  it("Should link from <HomePage /> to <CartPage/> and show product in cart when ADD TO CART is clicked", async () => {
+    render(
+      <AuthProvider>
+        <SearchProvider>
+          <CartProvider>
+            <MemoryRouter initialEntries={["/"]}>
+              <App />
+            </MemoryRouter>
+          </CartProvider>
+        </SearchProvider>
+      </AuthProvider>
+    );
+    await waitFor(() => screen.getAllByText("More Details"));
+    const addToCartButton = screen.getAllByText("ADD TO CART")[0];
+    fireEvent.click(addToCartButton);
+    const goToCartButton = screen.getByText("Cart");
+    fireEvent.click(goToCartButton);
+    await waitFor(() => screen.getByText("Cart Summary"));
+    expect(
+      screen.getByText("You Have 1 items in your cart")
+    ).toBeInTheDocument();
+    expect(screen.getByText(products[0].description)).toBeInTheDocument();
   });
 });

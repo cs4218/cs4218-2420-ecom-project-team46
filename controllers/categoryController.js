@@ -4,12 +4,13 @@ export const createCategoryController = async (req, res) => {
   try {
     const { name } = req.body;
     if (!name) {
-      return res.status(401).send({ 
+      return res.status(401).send({
         success: false,
-        message: "Name is required" });
+        message: "Name is required",
+      });
     }
-    const existingCategory = await categoryModel.findOne({ 
-      slug: { $regex: new RegExp(`^${slugify(name)}$`, "i") } 
+    const existingCategory = await categoryModel.findOne({
+      slug: { $regex: new RegExp(`^${slugify(name)}$`, "i") },
     });
     if (existingCategory) {
       return res.status(200).send({
@@ -42,14 +43,15 @@ export const updateCategoryController = async (req, res) => {
     const { name } = req.body;
     const { id } = req.params;
     if (!name) {
-      return res.status(401).send({ 
+      return res.status(401).send({
         success: false,
-        message: "Name is required" });
+        message: "Name is required",
+      });
     }
 
-    const existingCategory = await categoryModel.findOne({ 
+    const existingCategory = await categoryModel.findOne({
       slug: { $regex: new RegExp(`^${slugify(name)}$`, "i") },
-      _id: { $ne: id }
+      _id: { $ne: id },
     });
     if (existingCategory) {
       throw new Error("Another category with same slug already exists!");
@@ -63,7 +65,7 @@ export const updateCategoryController = async (req, res) => {
 
     if (!category) {
       throw new Error("Category not found!");
-    };
+    }
 
     res.status(200).send({
       success: true,
@@ -126,7 +128,7 @@ export const deleteCategoryController = async (req, res) => {
 
     if (!category) {
       throw new Error("Category not found!");
-    };
+    }
 
     res.status(200).send({
       success: true,

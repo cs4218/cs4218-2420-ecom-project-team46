@@ -13,6 +13,7 @@ import categoryModel from "../models/categoryModel";
 import productModel from "../models/productModel";
 import { ObjectId } from "mongodb";
 import ExpressFormidable from "express-formidable";
+import { createCategoryController } from "../controllers/categoryController";
 
 let app;
 
@@ -118,6 +119,9 @@ beforeAll(async () => {
     "/api/v1/product/related-product/:pid/:cid",
     relatedProductController
   );
+
+  //category
+  app.post("/api/v1/category/create-category", createCategoryController);
 });
 
 afterAll(async () => {
@@ -145,6 +149,7 @@ describe("CRUD controller integration tests", () => {
         price: 100,
         category: products[0].category,
         quantity: 10,
+        shipping: true,
       };
       const originalCount = await productModel.countDocuments({});
       const res = await request(app)
@@ -153,7 +158,8 @@ describe("CRUD controller integration tests", () => {
         .field("description", newProduct.description)
         .field("price", newProduct.price)
         .field("category", newProduct.category)
-        .field("quantity", newProduct.quantity);
+        .field("quantity", newProduct.quantity)
+        .field("shipping", newProduct.shipping);
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.message).toBe("Product Created Successfully");
@@ -178,6 +184,7 @@ describe("CRUD controller integration tests", () => {
         price: 100,
         category: products[0].category,
         quantity: 10,
+        shipping: false,
       };
       const response = await request(app)
         .post("/api/v1/product/create-product")
@@ -186,6 +193,7 @@ describe("CRUD controller integration tests", () => {
         .field("price", newProduct.price)
         .field("category", newProduct.category)
         .field("quantity", newProduct.quantity)
+        .field("shipping", newProduct.shipping)
         .attach("photo", Buffer.from("fake photo content"), "fake-photo.jpg");
       expect(response.status).toBe(201);
       const addedDocument = await productModel.findOne({
@@ -202,6 +210,7 @@ describe("CRUD controller integration tests", () => {
         price: 100,
         category: products[0].category,
         quantity: 10,
+        shipping: true,
       };
       const response = await request(app)
         .post("/api/v1/product/create-product")
@@ -210,6 +219,7 @@ describe("CRUD controller integration tests", () => {
         .field("price", newProduct.price)
         .field("category", newProduct.category)
         .field("quantity", newProduct.quantity)
+        .field("shipping", newProduct.shipping)
         .attach("photo", Buffer.from("fake photo content"), "fake-photo.jpg");
       expect(response.status).toBe(500);
       expect(response.body.error).toBe("Name is Required");
@@ -351,6 +361,105 @@ describe("non-CRUD controller integration tests", () => {
       expect(res.body.products.length).toBe(
         products.filter((p) => p.category === products[0].category).length - 1
       );
+    });
+  });
+});
+
+describe("multi-component integration tests", () => {
+  describe("test interaction between Product Controllers", () => {
+    it("should work with createProductController + countProductController + deleteProductController together", async () => {
+      let res;
+      const n = 2;
+      // call create-product API and create n products
+      for (let i = 0; i < n; i++) {
+        const newProduct = products[i];
+        res = await request(app)
+          .post("/api/v1/product/create-product")
+          .field("name", newProduct.name)
+          .field("description", newProduct.description)
+          .field("price", newProduct.price)
+          .field("category", newProduct.category)
+          .field("quantity", newProduct.quantity)
+          .field("shipping", newProduct.shipping);
+        expect(res.status).toBe(201);
+      }
+
+      // call countProduct API, make sure it is correct
+      res = await request(app).get("/api/v1/product/product-count");
+      expect(res.status).toBe(200);
+      expect(res.body.total).toBe(n);
+
+      // delete one of the products
+      // lets say we want to delete products[0]
+      const addedDocument = await productModel.findOne({
+        name: products[0].name,
+      });
+      res = await request(app).delete(
+        `/api/v1/product/delete-product/${addedDocument._id}`
+      );
+      expect(res.status).toBe(200);
+
+      // check the count again
+      res = await request(app).get("/api/v1/product/product-count");
+      expect(res.status).toBe(200);
+      expect(res.body.total).toBe(n - 1);
+    });
+
+    it("should work with createProductController + updateProductController + getProductController together", async () => {
+      let res;
+      const n = 2;
+      // call create-product API and create n products
+      for (let i = 0; i < n; i++) {
+        const newProduct = products[i];
+        res = await request(app)
+          .post("/api/v1/product/create-product")
+          .field("name", newProduct.name)
+          .field("description", newProduct.description)
+          .field("price", newProduct.price)
+          .field("category", newProduct.category)
+          .field("quantity", newProduct.quantity)
+          .field("shipping", newProduct.shipping);
+        expect(res.status).toBe(201);
+      }
+
+      // check that get-products response is correct
+      res = await request(app).get("/api/v1/product/get-product");
+      expect(res.status).toBe(200);
+      let returnedProducts = res.body.products.sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+
+      for (let i = 0; i < returnedProducts.length; i++) {
+        let product = products[i];
+        let savedProduct = returnedProducts[i];
+        expect(savedProduct.name).toBe(product.name);
+        expect(savedProduct.description).toBe(product.description);
+        expect(savedProduct.price).toBeCloseTo(product.price, 2);
+        expect(savedProduct.quantity).toBe(product.quantity);
+        expect(savedProduct.shipping).toBe(product.shipping);
+      }
+      // update each product's name
+      for (let i = 0; i < n; i++) {
+        const addedDocument = await productModel.findOne({
+          name: products[i].name,
+        });
+        res = await request(app)
+          .put(`/api/v1/product/update-product/${addedDocument._id}`)
+          .field("name", products[i].name + "UPDATED");
+        expect(res.status).toBe(200);
+      }
+
+      // check that get-products response has the updated values
+      res = await request(app).get("/api/v1/product/get-product");
+      expect(res.status).toBe(200);
+      returnedProducts = res.body.products.sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+      for (let i = 0; i < returnedProducts.length; i++) {
+        let product = products[i];
+        let savedProduct = returnedProducts[i];
+        expect(savedProduct.name).toBe(product.name + "UPDATED");
+      }
     });
   });
 });
