@@ -588,12 +588,15 @@ docker compose -f 'docker-compose.sonarqube.yml' down
             <td> Kew Kok Wen </td>
             <td>
                 <ul>
-                    <li></li>
+                    <li>./integration-tests/order.integration.test.js</li>
+                    <li>./integration-tests/home-page.integration.test.js</li>
                 </ul>
             </td>
             <td>
                 <ul>
-                    <li></li>
+                    <li>./ui-tests/orders-page.spec.cjs</li>
+                    <li>./ui-tests/admin-orders-page.spec.cjs</li>
+                    <li>./ui-tests/home-page.spec.cjs</li>
                 </ul>
             </td>
         </tr>
