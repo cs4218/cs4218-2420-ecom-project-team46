@@ -21,7 +21,7 @@ test.describe('Create Category Page (Admin) - Non-DB related', () => {
     await expect(page).toHaveURL('/dashboard/admin/create-category');
   });
 
-  test('key components must be visible', async ({ page }) => {
+  test('key components are rendered in page', async ({ page }) => {
     await page.goto('/dashboard/admin/create-category');
 		await page.waitForLoadState('load');
     await expect(page.getByRole('heading', { name: 'Manage Category' })).toBeVisible();
@@ -44,7 +44,7 @@ test.describe('Create Category Page (Admin) - DB related', () => {
     execSync('npm run db:reset', { stdio: 'inherit' });
   });
 
-  test('category creation should reflect new category', async ({ page }) => {
+  test('should reflect new category in page after category creation', async ({ page }) => {
     await page.goto('/dashboard/admin/create-category');
 		await page.waitForLoadState('load');
     await page.getByRole('textbox', { name: 'Enter new category' }).click();
@@ -55,7 +55,7 @@ test.describe('Create Category Page (Admin) - DB related', () => {
     await expect(page.locator('tbody')).toContainText('New Category');
   });
 
-  test('category creation with no inputs should show error message', async ({ page }) => {
+  test('should show error message when no input given during category creation', async ({ page }) => {
     await page.goto('/dashboard/admin/create-category');
 		await page.waitForLoadState('load');
     await page.getByRole('button', { name: 'Submit' }).click();
@@ -63,7 +63,7 @@ test.describe('Create Category Page (Admin) - DB related', () => {
     await expect(page.getByRole('status')).not.toBeVisible({ timeout: 10000 });
   });
 
-  test('category creation for existing category should indicate success with no duplicated category', async ({ page }) => {
+  test('should indicate success with no duplicated category when creating new category with same name as existing category', async ({ page }) => {
     await page.goto('/dashboard/admin/create-category');
 		await page.waitForLoadState('load');
     await page.getByRole('textbox', { name: 'Enter new category' }).click();
@@ -74,7 +74,7 @@ test.describe('Create Category Page (Admin) - DB related', () => {
     await expect(page.getByRole('cell', { name: 'Book' })).toHaveCount(1);
   });
 
-  test('category update should reflect updated category', async ({ page }) => {
+  test('should reflect updated category name after category update', async ({ page }) => {
     await page.goto('/dashboard/admin/create-category');
 		await page.waitForLoadState('load');
     await page.getByRole('button', { name: 'Edit' }).nth(2).click();
@@ -88,7 +88,7 @@ test.describe('Create Category Page (Admin) - DB related', () => {
     await expect(page.locator('tbody')).toContainText('Apparel');
   });
 
-  test('category update to another category with same name should return error message', async ({ page }) => {
+  test('should return error message when updating category name that is the same as another category', async ({ page }) => {
     await page.goto('/dashboard/admin/create-category');
 		await page.waitForLoadState('load');
     await page.getByRole('button', { name: 'Edit' }).nth(2).click();
@@ -102,7 +102,7 @@ test.describe('Create Category Page (Admin) - DB related', () => {
     await expect(page.getByRole('cell', { name: 'Book' })).toHaveCount(1);
   });
 
-  test('category deletion should not show deleted category', async ({ page }) => {
+  test('should not show deleted category name after category deletion', async ({ page }) => {
     await page.goto('/dashboard/admin/create-category');
 		await page.waitForLoadState('load');
     await page.getByRole('button', { name: 'Delete' }).nth(1).click();
@@ -148,7 +148,7 @@ for (const { type, storageState } of storageStates) {
       execSync('npm run db:reset', { stdio: 'inherit' });
     });
 
-    test('newly created category should be reflected in header dropdown and all categories page with correct URL', async ({ browser }) => {
+    test('should reflect newly created category in header dropdown and in categories page after category creation', async ({ browser }) => {
       
       // Create new category (as Admin)
       const adminContext = await browser.newContext({ storageState: 'playwright-storage/admin.json' });
@@ -184,7 +184,7 @@ for (const { type, storageState } of storageStates) {
       await userContext.close();
     });
 
-    test('updated category should be reflected in header dropdown and all categories page with correct URL', async ({ browser }) => {
+    test('should reflect updated category name in header dropdown and categories page after category update', async ({ browser }) => {
       
       // Create new category (as Admin)
       const adminContext = await browser.newContext({ storageState: 'playwright-storage/admin.json' });
@@ -225,7 +225,7 @@ for (const { type, storageState } of storageStates) {
       await userContext.close();
     });
 
-    test('deleted category should not be in header dropdown and all categories page', async ({ browser }) => {
+    test('should not show deleted category name in header dropdown and categories page after category deletion', async ({ browser }) => {
       
       // Create new category (as Admin)
       const adminContext = await browser.newContext({ storageState: 'playwright-storage/admin.json' });

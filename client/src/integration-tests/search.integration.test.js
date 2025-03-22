@@ -42,7 +42,7 @@ afterEach(() => {
 
 describe("Search Page Integration Tests", () => {
 
-  it("should show list of products found if there are results", async () => {
+  it("should show all matching products found if search using an existing product keyword", async () => {
 
     await act(async () => {
       render(
@@ -93,7 +93,7 @@ describe("Search Page Integration Tests", () => {
     });
   });
 
-  it("should return no products if there are no results", async () => {
+  it("should not show any products if search using a keyword not matching any products", async () => {
 
     await act(async () => {
       render(
@@ -136,7 +136,7 @@ describe("Search Page Integration Tests", () => {
     });
   });
 
-  it("should add product to cart and shows a toast message when 'ADD TO CART' is clicked", async () => {
+  it("should add product to cart when 'ADD TO CART' button is clicked", async () => {
 
     await act(async () => {
       render(

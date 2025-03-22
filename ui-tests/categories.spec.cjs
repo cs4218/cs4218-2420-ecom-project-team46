@@ -13,7 +13,7 @@ for (const { type, storageState } of storageStates) {
 
     test.use({ storageState: storageState });
 
-    test('can navigate to page successfully', async ({ page }) => {
+    test(`${type} can navigate to page successfully`, async ({ page }) => {
       await page.goto('/');
       await page.waitForLoadState('load');
       await page.getByRole('link', { name: 'Categories' }).click();
@@ -34,7 +34,7 @@ for (const { type, storageState } of storageStates) {
       execSync('npm run db:reset', { stdio: 'inherit' });
     });
 
-    test('each category link navigates to correct url', async ({ page }) => {
+    test('each category link in category page should be working and navigates to correct category product page', async ({ page }) => {
       await page.goto('/categories');
       await page.waitForLoadState('load');
     

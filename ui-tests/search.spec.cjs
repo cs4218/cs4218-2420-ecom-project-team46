@@ -21,7 +21,7 @@ for (const { type, storageState } of storageStates) {
 		 execSync('npm run db:reset', { stdio: 'inherit' });
 		});
 
-		test('search for non existent products should not return products', async ({ page }) => {
+		test('should not return any products if search using non-existent product keywords', async ({ page }) => {
 			await page.goto('/');
 			await page.waitForLoadState('load');
 			await page.getByRole('searchbox', { name: 'Search' }).click();
@@ -35,7 +35,7 @@ for (const { type, storageState } of storageStates) {
 
 		const searchTerms = ['Phone', 'book'];
 		for (const term of searchTerms) {
-			test(`search for existing products should return relevant products with key components rendered correctly with correct URLs - ${term}`, async ({ page }) => {
+			test(`should return relevant products with key components rendered correctly when search using existing product keywords - ${term}`, async ({ page }) => {
 				await page.goto('/');
 				await page.waitForLoadState('load');
 				await page.getByRole('searchbox', { name: 'Search' }).click();
@@ -75,7 +75,7 @@ for (const { type, storageState } of storageStates) {
 			});
 		}
 
-		test(`search for existing products and adding them to cart should show up in cart`, async ({ page }) => {
+		test(`should show up in cart when adding products from search results to cart`, async ({ page }) => {
 			await page.goto('/');
 			await page.waitForLoadState('load');
 			await page.getByRole('searchbox', { name: 'Search' }).click();
@@ -105,7 +105,7 @@ for (const { type, storageState } of storageStates) {
 			}
 		});
 
-		test(`search for existing products and adding them to cart multiple times should show up in cart multiple times`, async ({ page }) => {
+		test(`should show up in cart when adding products from search results to cart (multiple times)`, async ({ page }) => {
 			await page.goto('/');
 			await page.waitForLoadState('load');
 			await page.getByRole('searchbox', { name: 'Search' }).click();

@@ -58,7 +58,7 @@ afterEach(() => {
 
 describe("CreateCategory Integration Tests", () => {
 
-  it("should render the page correctly with essential components and all categories", async () => {
+  it("should render the page correctly with essential components and show all categories", async () => {
 
     await act(async () => {
       render(
@@ -103,7 +103,7 @@ describe("CreateCategory Integration Tests", () => {
     expect(screen.getAllByText("Delete").length).toBe(categories.length);
   });
 
-  it("should create a new category and updates the category list on successful form submission", async () => {
+  it("should create a new category and update the category list on successful form submission", async () => {
 
     await act(async () => {
       render(
