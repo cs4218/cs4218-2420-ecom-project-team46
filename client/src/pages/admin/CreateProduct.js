@@ -13,9 +13,10 @@ const CreateProduct = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState("66db427fdb0119d9234b27ed");
   const [quantity, setQuantity] = useState("");
-  const [shipping, setShipping] = useState("");
+  const [shipping, setShipping] = useState("false");
+  const [shippingOptions, setShippingOptions] = useState(["No", "es"]);
   const [photo, setPhoto] = useState("");
 
   //get all category
@@ -40,11 +41,13 @@ const CreateProduct = () => {
     e.preventDefault();
     try {
       const productData = new FormData();
+      productData.append("name", name);
       productData.append("description", description);
       productData.append("price", price);
       productData.append("quantity", quantity);
       productData.append("photo", photo);
       productData.append("category", category);
+      productData.append("shipping", shipping);
       const { data } = await axios.post(
         "/api/v1/product/create-product",
         productData
@@ -82,6 +85,7 @@ const CreateProduct = () => {
                   setCategory(value);
                 }}
                 data-testid="category-selector"
+                defaultValue="Electronics"
               >
                 {categories?.map((c) => (
                   <Option key={c._id} value={c._id}>
@@ -160,9 +164,14 @@ const CreateProduct = () => {
                   onChange={(value) => {
                     setShipping(value);
                   }}
+                  data-testid="shipping-selector"
+                  defaultValue="No"
                 >
-                  <Option value="0">No</Option>
-                  <Option value="1">Yes</Option>
+                  {shippingOptions?.map((c) => (
+                    <Option key={c == "No" ? 0 : 1} value={c == "No" ? 0 : 1}>
+                      {c}
+                    </Option>
+                  ))}
                 </Select>
               </div>
               <div className="mb-3">
