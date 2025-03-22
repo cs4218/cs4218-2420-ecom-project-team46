@@ -68,7 +68,7 @@ const products = [
 ];
 
 describe("Admin product integration tests", () => {
-  test("/pages/admin/Products.js component correctly shows all products", async () => {
+  it("should correctly show all products in <Products /> component", async () => {
     // render the entire app as done in App.js, instead of individual components
     render(
       <AuthProvider>
@@ -87,7 +87,7 @@ describe("Admin product integration tests", () => {
       expect(screen.getByText(product.description)).toBeInTheDocument();
     });
   });
-  test("/pages/admin/Products.js has working links to Update Product page and properly updates a product", async () => {
+  it("should have working links to <UpdateProduct /> from <Product /> and correctly perform update", async () => {
     render(
       <AuthProvider>
         <SearchProvider>
@@ -125,7 +125,7 @@ describe("Admin product integration tests", () => {
     // check that the new product list has Fantasy Story
     await waitFor(() => screen.getByText("Fantasy Story"));
   });
-  test("/pages/admin/Products.js has working links to Update Product page and properly deletes a product", async () => {
+  it("should have working links to <UpdateProduct /> from <Product /> and correctly perform delete", async () => {
     render(
       <AuthProvider>
         <SearchProvider>
@@ -170,7 +170,7 @@ describe("Admin product integration tests", () => {
 });
 
 describe("User product integration tests", () => {
-  test("homepage should show all the products", async () => {
+  it("should show all the products on <HomePage />", async () => {
     render(
       <AuthProvider>
         <SearchProvider>
@@ -191,7 +191,7 @@ describe("User product integration tests", () => {
       ).toBeInTheDocument();
     });
   });
-  test("More details button from homepage should link to Product Details page", async () => {
+  it("Should link from <HomePage/> to <ProductDetails/> when More Details button is clicked", async () => {
     render(
       <AuthProvider>
         <SearchProvider>
