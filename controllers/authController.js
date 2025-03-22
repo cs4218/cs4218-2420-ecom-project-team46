@@ -9,30 +9,32 @@ export const registerController = async (req, res) => {
     const { name, email, password, phone, address, answer } = req.body;
     // validations
     // add 400 status code to indicate Bad Request
+    // update on 20250323: remove 400 to go into else block
     if (!name) {
-      return res.status(400).send({ message: "Name is Required" }); // align to message, like the rest
+      return res.send({ message: "Name is Required" }); // align to message, like the rest
     }
     if (!email) {
-      return res.status(400).send({ message: "Email is Required" });
+      return res.send({ message: "Email is Required" });
     }
     if (!password) {
-      return res.status(400).send({ message: "Password is Required" });
+      return res.send({ message: "Password is Required" });
     }
     if (!phone) {
-      return res.status(400).send({ message: "Phone no is Required" });
+      return res.send({ message: "Phone no is Required" });
     }
     if (!address) {
-      return res.status(400).send({ message: "Address is Required" });
+      return res.send({ message: "Address is Required" });
     }
     if (!answer) {
-      return res.status(400).send({ message: "Answer is Required" });
+      return res.send({ message: "Answer is Required" });
     }
     //check user
     const exisitingUser = await userModel.findOne({ email });
     //exisiting user
     if (exisitingUser) {
       // status code changed from 200 to 409 to indicate Conflict
-      return res.status(409).send({
+      // update on 20250323: remove 4xx to go into else block
+      return res.send({
         success: false,
         message: "Already Register please login",
       });
@@ -72,7 +74,8 @@ export const loginController = async (req, res) => {
     // even though client side shows email and password fileds are both required, these checks can be bypassed in the user's browser => still crucial for server-side to validate
     if (!email || !password) {
       // changed code from 404 to 400 as Bad Request is more appropriate
-      return res.status(400).send({
+      // update on 20250323: remove 400 to go into else block
+      return res.send({
         success: false,
         message: "Invalid email or password",
       });
@@ -81,9 +84,10 @@ export const loginController = async (req, res) => {
 
     // shouldn't be so explicit about whether the email or password is incorrect
     // 401 Unauthorized is more appropriate than 200
+    // update on 20250323: remove 4xx to go into else block
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(401).send({
+      return res.send({
         success: false,
         message: "Invalid email or password",
         // message: "Email is not registerd",
@@ -91,7 +95,7 @@ export const loginController = async (req, res) => {
     }
     const match = await comparePassword(password, user.password);
     if (!match) {
-      return res.status(401).send({
+      return res.send({
         success: false,
         message: "Invalid email or password",
         // message: "Invalid Password",
@@ -130,19 +134,19 @@ export const forgotPasswordController = async (req, res) => {
     const { email, answer, newPassword } = req.body;
     // if any of these is empty, should just return
     if (!email) {
-      return res.status(400).send({ message: "Email is required" });
+      return res.send({ message: "Email is required" });
     }
     if (!answer) {
-      return res.status(400).send({ message: "answer is required" });
+      return res.send({ message: "answer is required" });
     }
     if (!newPassword) {
-      return res.status(400).send({ message: "New Password is required" });
+      return res.send({ message: "New Password is required" });
     }
     //check
     const user = await userModel.findOne({ email, answer });
     //validation
     if (!user) {
-      return res.status(401).send({
+      return res.send({
         success: false,
         message: "Wrong Email Or Answer",
       });
