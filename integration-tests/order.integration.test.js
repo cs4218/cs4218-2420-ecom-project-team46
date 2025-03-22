@@ -319,9 +319,9 @@ describe("getAllOrdersController", () => {
   });
 
   it("should return a 200 status and an empty list when attempting to fetch orders from '/api/v1/auth/all-orders' when no past orders exist", async () => {
-    await Order.collection.drop();
+    await Order.deleteMany({});
     const response = await supertest(app)
-      .get("/api/v1/auth/orders")
+      .get("/api/v1/auth/all-orders")
       .set(
         "Authorization",
         JWT.sign({ _id: admin._id }, process.env.JWT_SECRET)
@@ -330,6 +330,25 @@ describe("getAllOrdersController", () => {
 
     expect(response.body).toHaveLength(0);
     expect(response.body).toEqual([]);
+  });
+
+  it("should return a 500 status and an appropriate error message when the database fails", async () => {
+    await mongoose.disconnect();
+    const response = await supertest(app)
+      .get("/api/v1/auth/all-orders")
+      .set(
+        "Authorization",
+        JWT.sign({ _id: admin._id }, process.env.JWT_SECRET)
+      )
+      .expect(500);
+
+    expect(response.body).toHaveProperty("success", false);
+    expect(response.body).toHaveProperty(
+      "message",
+      "Error in admin middleware"
+    );
+
+    await mongoose.connect(mongoServer.getUri());
   });
 });
 
