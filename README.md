@@ -538,12 +538,19 @@ docker compose -f 'docker-compose.sonarqube.yml' down
             <td> Lam Jiu Fong </td>
             <td>
                 <ul>
-                    <li></li>
+                    <li>./integration-tests/getAllUsers.integration.test.js</li>
+                    <li>./integration-tests/updateProfile.integration.test.js</li>
+                    <li>./client/src/integration-tests/getAllUsers.integration.test.js</li>
+                    <li>./client/src/integration-tests/profile.integration.test.js</li>
                 </ul>
             </td>
             <td>
                 <ul>
-                    <li></li>
+                    <li>./ui-tests/admin-users-page.spec.cjs</li>
+                    <li>./ui-tests/admin-dashboard.spec.cjs</li>
+                    <li>./ui-tests/cart.spec.cjs</li>
+                    <li>./ui-tests/user-dashboard.spec.cjs</li>
+                    <li>./ui-tests/user-profile.spec.cjs</li>
                 </ul>
             </td>
         </tr>
