@@ -65,7 +65,7 @@ describe("Update personal information integration test", () => {
     expect(updatedUser.address).toBe(expectedUser.address);
   });
 
-  test("should return status 500 if password is too short", async () => {
+  test("should return error message if password is too short", async () => {
     const expectedUser = {
       name: "userr1123",
       password: "short",
@@ -73,14 +73,17 @@ describe("Update personal information integration test", () => {
       address: "bukitpanjang",
     }
     
-    await supertest(app)
+    const response = await supertest(app)
     .put("/api/v1/auth/profile")
     .set(
       "Authorization",
       JWT.sign({ _id: user._id }, process.env.JWT_SECRET)
     )
     .send(expectedUser)
-    .expect(500);
+
+    const json = JSON.parse(response.text)
+
+    expect(json["error"]).toBe("Passsword is required and 6 character long");
   });
 
   test("should return status 401 if not signed in", async () => {
@@ -115,7 +118,7 @@ describe("Update personal information integration test", () => {
     .expect(401);
   });
 
-  test("should return status 500 if user is not in database", async () => {
+  test("should return status 400 if user is not in database", async () => {
     const expectedUser = {
       name: "userr1123",
       password: "password112313",
@@ -130,10 +133,10 @@ describe("Update personal information integration test", () => {
       JWT.sign({ _id: 12345 }, process.env.JWT_SECRET)
     )
     .send(expectedUser)
-    .expect(500);
+    .expect(400);
   });
 
-  test("should return status 500 if error happens in the backend", async () => {
+  test("should return status 400 if error happens in the backend", async () => {
     await mongoose.disconnect();
 
     const expectedUser = {
@@ -150,6 +153,6 @@ describe("Update personal information integration test", () => {
       JWT.sign({ _id: user._id }, process.env.JWT_SECRET)
     )
     .send(expectedUser)
-    .expect(500);
+    .expect(400);
   });
 })
