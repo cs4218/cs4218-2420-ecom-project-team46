@@ -11,7 +11,7 @@ test.describe("Product add to cart flow tests", () => {
   test.afterAll(async ({}) => {
     execSync("npm run db:reset", { stdio: "inherit" });
   });
-  it("should show products added to cart in homepage on cart page", async ({
+  test("should show products added to cart in homepage on cart page", async ({
     page,
   }) => {
     await page.goto("http://localhost:3000/");
@@ -29,7 +29,7 @@ test.describe("Product add to cart flow tests", () => {
     await page.getByText("LaptopA powerful laptopPrice :").click();
   });
 
-  it("should show products added to cart in product details page on cart page", async ({
+  test("should show products added to cart in product details page on cart page", async ({
     page,
   }) => {
     await page.goto("http://localhost:3000/");
@@ -42,7 +42,7 @@ test.describe("Product add to cart flow tests", () => {
     await page.getByText("SmartphoneA high-end").click();
   });
 
-  it("should show products added to cart from similar products on cart page", async ({
+  test("should show products added to cart from similar products on cart page", async ({
     page,
   }) => {
     await page.goto("http://localhost:3000/");

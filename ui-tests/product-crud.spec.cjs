@@ -12,7 +12,7 @@ test.describe("Product Admin Panel CRUD tests", () => {
     execSync("npm run db:reset", { stdio: "inherit" });
   });
   test.describe("CREATE tests", () => {
-    it("should create product successfully", async ({ page }) => {
+    test("should create product successfully", async ({ page }) => {
       await page.goto("http://localhost:3000/dashboard/admin/create-product");
       await page.locator("#rc_select_0").click();
       await page.getByTitle("Electronics").locator("div").click();
@@ -41,7 +41,9 @@ test.describe("Product Admin Panel CRUD tests", () => {
         "Playwright Test Product"
       );
     });
-    it("should fail to create product with missing field", async ({ page }) => {
+    test("should fail to create product with missing field", async ({
+      page,
+    }) => {
       await page.goto("http://localhost:3000/dashboard/admin/create-product");
       await page.getByRole("button", { name: "CREATE PRODUCT" }).click();
       await expect(page.getByRole("status")).toContainText(
@@ -50,7 +52,7 @@ test.describe("Product Admin Panel CRUD tests", () => {
     });
   });
   test.describe("READ tests", () => {
-    it("should display all products on /admin/products", async ({ page }) => {
+    test("should display all products on /admin/products", async ({ page }) => {
       await page.goto("localhost:3000/dashboard/admin/products");
       const productNames = [
         "Novel",
@@ -64,7 +66,7 @@ test.describe("Product Admin Panel CRUD tests", () => {
         await expect(page.getByRole("main")).toContainText(productName);
       }
     });
-    it("should lead to update product page with product details when product is clicked", async ({
+    test("should lead to update product page with product details when product is clicked", async ({
       page,
     }) => {
       await page.goto("localhost:3000/dashboard/admin/products");
@@ -77,7 +79,7 @@ test.describe("Product Admin Panel CRUD tests", () => {
     });
   });
   test.describe("Update tests", () => {
-    it("should update product successfully via product details page", async ({
+    test("should update product successfully via product details page", async ({
       page,
     }) => {
       await page.goto("localhost:3000/dashboard/admin/product/novel");
@@ -98,7 +100,7 @@ test.describe("Product Admin Panel CRUD tests", () => {
     });
   });
   test.describe("Delete tests", () => {
-    it("should delete product successfully via product details page", async ({
+    test("should delete product successfully via product details page", async ({
       page,
     }) => {
       await page.goto(
