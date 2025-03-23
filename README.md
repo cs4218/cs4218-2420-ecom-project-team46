@@ -522,12 +522,14 @@ docker compose -f 'docker-compose.sonarqube.yml' down
             <td> Lin Xingting </td>
             <td>
                 <ul>
-                    <li></li>
+                    <li>./integration-tests/auth.integration.test.js</li>
+                    <li>./client/src/integration-tests/auth.integration.test.js</li>
                 </ul>
             </td>
             <td>
                 <ul>
-                    <li></li>
+                    <li>./ui-tests/auth-flow.spec.cjs</li>
+                    <li>./ui-tests/user-admin-access-control.spec.cjs</li>
                 </ul>
             </td>
         </tr>
