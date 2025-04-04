@@ -18,7 +18,8 @@
     "integration": "concurrently \"npm run integration:backend\" \"npm run integration:frontend\"",
     "coverage": "concurrently --kill-others \"npm run server\" \"npx wait-on http://localhost:6060 && jest --config jest.coverage.config.json --runInBand --collect-coverage\" && kill $(lsof -t -i:6060) || true",
     "db:reset": "node ./reset-mongodb/reset-mongodb.js",
-    "playwright": "npx playwright test --workers=1"
+    "playwright": "npx playwright test --workers=1",
+    "volume-test-seed-mongodb": "node ./volume-testing/seedDatabase.js"
   },
   "keywords": [],
   "author": "RP",
