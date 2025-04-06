@@ -15,7 +15,7 @@ const NUM_CATEGORIES = 3 * SCALE_FACTOR; // sample data has 3 categories
 const NUM_USERS = 12 * SCALE_FACTOR; // sample data has 12 users
 const NUM_PRODUCTS = 6 * SCALE_FACTOR; // sample data has 6 products
 const NUM_ORDERS = 1 * SCALE_FACTOR; // sample data has 1 order
-const BATCH_SIZE = 25_000;
+const BATCH_SIZE = 1000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,41 +52,46 @@ async function insertCategories() {
 }
 
 async function insertUsers() {
-  // start with the two default users
-  const users = [
-    {
-      name: "Playwright User Account",
-      email: "cs4218@test.com",
-      password: "$2b$10$//wWsN./fEX1WiipH57HG.SAwgkYv1MRrPSkpXM38Dy5seOEhCoUy",
-      phone: "81234567",
-      address: "1 Computing Drive",
-      answer: "password is cs4218@test.com",
-      role: 0,
-    },
-    {
-      name: "Playwright Admin Account",
-      email: "cs4218admin@test.com",
-      password: "$2b$10$DbfCqTB.LQtcHgkgLoEdVeGIZi3rsM81j4J5T31rAxjw7WBgCX3Ry",
-      phone: "81234567",
-      address: "1 Computing Drive",
-      answer: "password is cs4218admin@test.com",
-      role: 1,
-    },
-  ];
+  const users = [];
   for (let i = 0; i < NUM_USERS; i++) {
-    users.push({
-      name: faker.person.fullName(),
-      email: i.toString() + faker.internet.email(), // add the number to ensure uniqueness
-      password: faker.internet.password(),
-      phone: faker.phone.number(),
-      address: {
-        street: faker.location.streetAddress(),
-        city: faker.location.city(),
-        zip: faker.location.zipCode(),
-      },
-      answer: faker.lorem.sentence(),
-      role: faker.number.int({ min: 0, max: 1 }),
-    });
+    // the first two users will be the default users
+    if (i == 0) {
+      users.push({
+        name: "Playwright User Account",
+        email: "cs4218@test.com",
+        password:
+          "$2b$10$//wWsN./fEX1WiipH57HG.SAwgkYv1MRrPSkpXM38Dy5seOEhCoUy",
+        phone: "81234567",
+        address: "1 Computing Drive",
+        answer: "password is cs4218@test.com",
+        role: 0,
+      });
+    } else if (i == 1) {
+      users.push({
+        name: "Playwright Admin Account",
+        email: "cs4218admin@test.com",
+        password:
+          "$2b$10$DbfCqTB.LQtcHgkgLoEdVeGIZi3rsM81j4J5T31rAxjw7WBgCX3Ry",
+        phone: "81234567",
+        address: "1 Computing Drive",
+        answer: "password is cs4218admin@test.com",
+        role: 1,
+      });
+    } else {
+      users.push({
+        name: faker.person.fullName(),
+        email: i.toString() + faker.internet.email(), // add the number to ensure uniqueness
+        password: faker.internet.password(),
+        phone: faker.phone.number(),
+        address: {
+          street: faker.location.streetAddress(),
+          city: faker.location.city(),
+          zip: faker.location.zipCode(),
+        },
+        answer: faker.lorem.sentence(),
+        role: faker.number.int({ min: 0, max: 1 }),
+      });
+    }
 
     if ((i + 1) % BATCH_SIZE === 0 || i + 1 === NUM_USERS) {
       await User.insertMany(users);
