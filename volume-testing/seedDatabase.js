@@ -7,12 +7,14 @@ import Order from "../models/orderModel.js";
 import Category from "../models/categoryModel.js";
 import dotenv from "dotenv";
 import path from "path";
+import axios from "axios";
 
 // === CONFIGURATION ===
-const NUM_CATEGORIES = 3000;
-const NUM_USERS = 10_000;
-const NUM_PRODUCTS = 100_000;
-const NUM_ORDERS = 50_000;
+const SCALE_FACTOR = 1000; // scale up according to how many times from the given dummy data
+const NUM_CATEGORIES = 3 * SCALE_FACTOR; // sample data has 3 categories
+const NUM_USERS = 12 * SCALE_FACTOR; // sample data has 12 users
+const NUM_PRODUCTS = 6 * SCALE_FACTOR; // sample data has 6 products
+const NUM_ORDERS = 1 * SCALE_FACTOR; // sample data has 1 order
 const BATCH_SIZE = 25_000;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,6 +28,15 @@ await mongoose.connect(uri, {
 });
 
 console.log("Connected to MongoDB");
+
+async function getRandomStockImage() {
+  const url = `https://picsum.photos/400/400`; // returns a random image
+  const response = await axios.get(url, { responseType: "arraybuffer" });
+  return {
+    data: Buffer.from(response.data, "binary"),
+    contentType: response.headers["content-type"],
+  };
+}
 
 async function insertCategories() {
   const categories = [];
@@ -68,6 +79,7 @@ async function insertUsers() {
 
 async function insertProducts(categories) {
   const products = [];
+  const photo = await getRandomStockImage();
   for (let i = 0; i < NUM_PRODUCTS; i++) {
     products.push({
       name: faker.commerce.productName(),
@@ -77,6 +89,7 @@ async function insertProducts(categories) {
       category: categories[Math.floor(Math.random() * categories.length)]._id,
       quantity: faker.number.int({ min: 1, max: 100 }),
       shipping: faker.datatype.boolean(),
+      photo: photo,
     });
 
     if ((i + 1) % BATCH_SIZE === 0 || i + 1 === NUM_PRODUCTS) {
