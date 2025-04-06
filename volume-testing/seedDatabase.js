@@ -10,7 +10,7 @@ import path from "path";
 import axios from "axios";
 
 // === CONFIGURATION ===
-const SCALE_FACTOR = 1000; // scale up according to how many times from the given dummy data
+const SCALE_FACTOR = 10; // scale up according to how many times from the given dummy data
 const NUM_CATEGORIES = 3 * SCALE_FACTOR; // sample data has 3 categories
 const NUM_USERS = 12 * SCALE_FACTOR; // sample data has 12 users
 const NUM_PRODUCTS = 6 * SCALE_FACTOR; // sample data has 6 products
@@ -52,7 +52,27 @@ async function insertCategories() {
 }
 
 async function insertUsers() {
-  const users = [];
+  // start with the two default users
+  const users = [
+    {
+      name: "Playwright User Account",
+      email: "cs4218@test.com",
+      password: "$2b$10$//wWsN./fEX1WiipH57HG.SAwgkYv1MRrPSkpXM38Dy5seOEhCoUy",
+      phone: "81234567",
+      address: "1 Computing Drive",
+      answer: "password is cs4218@test.com",
+      role: 0,
+    },
+    {
+      name: "Playwright Admin Account",
+      email: "cs4218admin@test.com",
+      password: "$2b$10$DbfCqTB.LQtcHgkgLoEdVeGIZi3rsM81j4J5T31rAxjw7WBgCX3Ry",
+      phone: "81234567",
+      address: "1 Computing Drive",
+      answer: "password is cs4218admin@test.com",
+      role: 1,
+    },
+  ];
   for (let i = 0; i < NUM_USERS; i++) {
     users.push({
       name: faker.person.fullName(),
