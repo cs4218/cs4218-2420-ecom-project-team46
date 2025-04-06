@@ -218,13 +218,7 @@ export const updateProductController = async (req, res) => {
 // filters
 export const productFiltersController = async (req, res) => {
   try {
-    let { checked, radio } = req.body;
-    if (!checked) {
-      checked = [];
-    }
-    if (!radio) {
-      radio = "";
-    }
+    const { checked, radio } = req.body;
     let args = {};
     if (checked.length > 0) args.category = checked;
     if (radio.length === 2) {
