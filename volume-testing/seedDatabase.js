@@ -10,11 +10,10 @@ import path from "path";
 import axios from "axios";
 
 // === CONFIGURATION ===
-const SCALE_FACTOR = 10; // scale up according to how many times from the given dummy data
-const NUM_CATEGORIES = 3 * SCALE_FACTOR; // sample data has 3 categories
-const NUM_USERS = 12 * SCALE_FACTOR; // sample data has 12 users
-const NUM_PRODUCTS = 6 * SCALE_FACTOR; // sample data has 6 products
-const NUM_ORDERS = 1 * SCALE_FACTOR; // sample data has 1 order
+const NUM_CATEGORIES = 3; // sample data has 3 categories
+const NUM_USERS = 12; // sample data has 12 users
+const NUM_PRODUCTS = 6; // sample data has 6 products
+const NUM_ORDERS = 1; // sample data has 1 order
 const BATCH_SIZE = 1000;
 
 const __filename = fileURLToPath(import.meta.url);
