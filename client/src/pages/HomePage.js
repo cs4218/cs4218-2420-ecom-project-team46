@@ -95,12 +95,18 @@ const HomePage = () => {
   //get filtered product
   const filterProduct = async () => {
     try {
-      const response = await axios.post("/api/v1/product/product-filters", {
-        checked,
-        radio,
-      });
+      const response = await axios.post(
+        `/api/v1/product/product-filters/${page}`,
+        {
+          checked,
+          radio,
+        }
+      );
       if (response?.data?.success) {
-        setProducts(response.data.products);
+        setProducts((prevProducts) => [
+          ...prevProducts,
+          ...response.data.products,
+        ]);
       } else {
         console.log("Fetch is unsuccessful. Please try again later.");
       }

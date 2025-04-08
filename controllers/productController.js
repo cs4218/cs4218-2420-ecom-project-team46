@@ -226,7 +226,12 @@ export const productFiltersController = async (req, res) => {
     } else if (radio.length === 1) {
       args.price = { $gte: radio[0] };
     }
-    const products = await productModel.find(args);
+    const perPage = 6;
+    const page = req.params.page ? req.params.page : 1;
+    const products = await productModel
+      .find(args)
+      .skip((page - 1) * perPage)
+      .limit(perPage);
     res.status(200).send({
       success: true,
       products,
